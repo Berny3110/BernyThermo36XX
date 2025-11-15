@@ -13,6 +13,36 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+		<!-- Modal pour Édition Complète -->
+		<div id="edit-modal" class="modal">
+				<div class="modal-content">
+						<h3><i class="fas fa-edit"></i> Éditer l'Événement</h3>
+						<input type="datetime-local" id="edit-date-input" step="1">
+						<div class="temperature-selector-container manual">
+								<div class="selector degrees" id="edit-degrees-selector">
+										<span class="label">Degrés (°C)</span>
+										<div class="scroll-area" id="edit-degrees-scroll"></div>
+								</div>
+								<div class="separator">.<i class="fas fa-circle-dot"></i></div>
+								<div class="selector dixiemes" id="edit-dixiemes-selector">
+										<span class="label">Dixièmes</span>
+										<div class="scroll-area" id="edit-dixiemes-scroll"></div>
+								</div>
+								<div class="selector unites" id="edit-unites-selector">
+										<span class="label">Unités</span>
+										<div class="scroll-area" id="edit-unites-scroll"></div>
+										<span class="unit-label">°C</span>
+								</div>
+						</div>
+						<div class="current-temp-display manual">
+								<span id="edit-current-display">36.30°C</span>
+						</div>
+						<div class="modal-actions">
+								<button id="edit-ok">Enregistrer Modifications</button>
+								<button id="edit-cancel">Annuler</button>
+						</div>
+				</div>
+		</div>
     <div class="app-container" id="main-app-content">
         <!-- Toggle Mode Sombre -->
         <button id="theme-toggle" class="theme-toggle" title="Changer de thème">

@@ -1,4 +1,4 @@
-// script.js (Version Ordre Décroissant & Wrapping Seamless - CORRIGÉ)
+// script.js (Version Réécrite : Modal Unifié Édition + Fixes UX)
 
 // --- LOGIQUE PRINCIPALE ---
 
@@ -15,12 +15,6 @@ function initializeApp() {
     const chartCanvas = document.getElementById('monthly-chart');
     const chartTitle = document.getElementById('chart-title');
 
-    // Modal Édition refs
-    const dateModal = document.getElementById('date-modal');
-    const dateInput = document.getElementById('date-input');
-    const modalOk = document.getElementById('modal-ok');
-    const modalCancel = document.getElementById('modal-cancel');
-
     // Modal Ajout Manuel refs
     const addManualModal = document.getElementById('add-manual-modal');
     const addDateInput = document.getElementById('add-date-input');
@@ -30,6 +24,16 @@ function initializeApp() {
     const addDixiemesScroll = document.getElementById('add-dixiemes-scroll');
     const addUnitesScroll = document.getElementById('add-unites-scroll');
     const addCurrentDisplay = document.getElementById('add-current-display');
+
+    // Modal Édition refs (Nouveau : Unifié Date + Temp)
+    const editModal = document.getElementById('edit-modal');
+    const editDateInput = document.getElementById('edit-date-input');
+    const editOk = document.getElementById('edit-ok');
+    const editCancel = document.getElementById('edit-cancel');
+    const editDegreesScroll = document.getElementById('edit-degrees-scroll');
+    const editDixiemesScroll = document.getElementById('edit-dixiemes-scroll');
+    const editUnitesScroll = document.getElementById('edit-unites-scroll');
+    const editCurrentDisplay = document.getElementById('edit-current-display');
 
     // Configuration (3 roulettes principales)
     const BUFFER = 5;
@@ -71,14 +75,31 @@ function initializeApp() {
         }
     };
 
+    // Config roulettes édition (copie : Nouveau)
+    const editConfig = {
+        degrees: {
+            element: editDegreesScroll, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36,
+            format: (val) => val.toString().padStart(2, '0'),
+            buffer: BUFFER
+        },
+        dixiemes: {
+            element: editDixiemesScroll, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3,
+            format: (val) => val.toString().padStart(1, '0'),
+            buffer: BUFFER
+        },
+        unites: {
+            element: editUnitesScroll, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0,
+            format: (val) => val.toString().padStart(1, '0'),
+            buffer: BUFFER
+        }
+    };
+
     let temperatures = JSON.parse(localStorage.getItem('temperatures')) || [];
     if (temperatures.length > 100) {
         temperatures = temperatures.slice(0, 100);
         localStorage.setItem('temperatures', JSON.stringify(temperatures));
     }
     let editingIndex = -1;
-    let editingTimestamp = null;
-    let originalTimestamp = null;
 
     let chart = null;
 
@@ -145,7 +166,7 @@ function initializeApp() {
     }
 
     // INIT SWIPE (FIX : Direction up = -valeur, Wrapping sans jump + CORRECTION SENS & VALEUR)
-    function initSwipe(selectorConfig, isAddModal = false) {
+    function initSwipe(selectorConfig, isModal = false) {
         const { element, min, max, step, buffer } = selectorConfig;
         let startY = 0;
         let currentY = 0;
@@ -174,8 +195,10 @@ function initializeApp() {
             element.style.transform = `translateY(-${offset}px)`;
 
             // Mise à jour du display approprié
-            if (isAddModal) {
-                updateAddCurrentDisplay();
+            if (isModal) {
+                // Différencie add vs edit via global ou param (ici, assume add/edit ont même func pour simplicité)
+                if (document.getElementById('add-current-display')) updateAddCurrentDisplay();
+                if (document.getElementById('edit-current-display')) updateEditCurrentDisplay();
             } else {
                 updateCurrentDisplay();
             }
@@ -248,6 +271,12 @@ function initializeApp() {
     function updateAddCurrentDisplay() {
         const finalTemp = addConfig.degrees.currentValue + (addConfig.dixiemes.currentValue / 10) + (addConfig.unites.currentValue / 100);
         addCurrentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
+    }
+
+    // MAJ AFFICHAGE COURANT (edit modal : Nouveau)
+    function updateEditCurrentDisplay() {
+        const finalTemp = editConfig.degrees.currentValue + (editConfig.dixiemes.currentValue / 10) + (editConfig.unites.currentValue / 100);
+        editCurrentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
     }
 
     // TRI CHRONO HISTORIQUE (asc : oldest first)
@@ -362,71 +391,6 @@ function initializeApp() {
         });
     }
 
-    // FONCTIONS MODAL ÉDITION (no auto-save)
-    function showDateModal(initialDate) {
-        originalTimestamp = initialDate;
-        editingTimestamp = initialDate;
-        const date = new Date(initialDate);
-        const minDate = new Date(date.getFullYear() - 1, 0, 1).toISOString().slice(0, 16);
-        const maxDate = new Date(date.getFullYear() + 1, 11, 31).toISOString().slice(0, 16);
-        dateInput.min = minDate;
-        dateInput.max = maxDate;
-        dateInput.value = date.toISOString().slice(0, 16);
-        dateInput.focus();
-        dateModal.style.display = 'flex';
-    }
-
-    function hideDateModal() {
-        dateModal.style.display = 'none';
-    }
-
-    modalOk.addEventListener('click', () => {
-        modalOk.classList.add('validating');
-        const newDateStr = dateInput.value;
-        setTimeout(() => {
-            if (newDateStr && newDateStr !== '') {
-                const newDate = new Date(newDateStr + ':00');
-                if (!isNaN(newDate.getTime())) {
-                    editingTimestamp = newDate.toISOString();
-                } else {
-                    editingTimestamp = originalTimestamp;
-                }
-            } else {
-                editingTimestamp = originalTimestamp;
-            }
-            modalOk.classList.remove('validating');
-            hideDateModal();
-            // User édite temp maintenant
-        }, 500);
-    });
-
-    modalCancel.addEventListener('click', () => {
-        editingTimestamp = originalTimestamp;
-        hideDateModal();
-        editingIndex = -1;
-        saveButton.textContent = "Enregistrer la Température";
-        saveButton.classList.remove('saving');
-        config.degrees.currentValue = config.degrees.defaultValue;
-        config.dixiemes.currentValue = config.dixiemes.defaultValue;
-        config.unites.currentValue = config.unites.defaultValue;
-        renderSelector(config.degrees);
-        renderSelector(config.dixiemes);
-        renderSelector(config.unites);
-        initSwipe(config.degrees);
-        initSwipe(config.dixiemes);
-        initSwipe(config.unites);
-        updateCurrentDisplay();
-    });
-
-    dateInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') modalOk.click();
-        if (e.key === 'Escape') modalCancel.click();
-    });
-
-    window.addEventListener('click', (e) => {
-        if (e.target === dateModal) modalCancel.click();
-    });
-
     // FONCTIONS MODAL AJOUT MANUEL
     function showAddManualModal() {
         addConfig.degrees.currentValue = addConfig.degrees.defaultValue;
@@ -502,6 +466,80 @@ function initializeApp() {
         if (e.target === addManualModal) addManualCancel.click();
     });
 
+    // FONCTIONS MODAL ÉDITION (Nouveau : Unifié)
+    function showEditModal(index) {
+        editingIndex = index;
+        const temp = temperatures[index];
+
+        // Préremplir date
+        const date = new Date(temp.timestamp);
+        const minDate = new Date(date.getFullYear() - 1, 0, 1).toISOString().slice(0, 16);
+        const maxDate = new Date(date.getFullYear() + 1, 11, 31).toISOString().slice(0, 16);
+        editDateInput.min = minDate;
+        editDateInput.max = maxDate;
+        editDateInput.value = date.toISOString().slice(0, 16);
+
+        // Préremplir temp roulettes
+        editConfig.degrees.currentValue = Math.floor(temp.value);
+        const decimal = (temp.value % 1) * 100;
+        editConfig.dixiemes.currentValue = Math.floor(decimal / 10);
+        editConfig.unites.currentValue = Math.round(decimal % 10);
+        renderSelector(editConfig.degrees);
+        renderSelector(editConfig.dixiemes);
+        renderSelector(editConfig.unites);
+        initSwipe(editConfig.degrees, true); // true = modal mode
+        initSwipe(editConfig.dixiemes, true);
+        initSwipe(editConfig.unites, true);
+        updateEditCurrentDisplay();
+
+        // Show modal
+        editModal.style.display = 'flex';
+        editDateInput.focus();
+    }
+
+    function hideEditModal() {
+        editModal.style.display = 'none';
+        editingIndex = -1;
+    }
+
+    editOk.addEventListener('click', () => {
+        editOk.classList.add('validating');
+        const newDateStr = editDateInput.value;
+        setTimeout(() => {
+            let editTimestamp = temperatures[editingIndex].timestamp;
+            if (newDateStr && newDateStr !== '') {
+                const newDate = new Date(newDateStr + ':00');
+                if (!isNaN(newDate.getTime())) {
+                    editTimestamp = newDate.toISOString();
+                }
+            }
+
+            const degrees = editConfig.degrees.currentValue;
+            const dixiemes = editConfig.dixiemes.currentValue / 10;
+            const unites = editConfig.unites.currentValue / 100;
+            const finalTemp = degrees + dixiemes + unites;
+
+            temperatures[editingIndex] = { value: finalTemp, timestamp: editTimestamp };
+            localStorage.setItem('temperatures', JSON.stringify(temperatures));
+            renderHistory();
+            hideEditModal();
+            editOk.classList.remove('validating');
+        }, 500);
+    });
+
+    editCancel.addEventListener('click', () => {
+        hideEditModal();
+    });
+
+    editDateInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') editOk.click();
+        if (e.key === 'Escape') editCancel.click();
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === editModal) editCancel.click();
+    });
+
     // ACTIONS HISTORIQUE
     window.deleteTemp = function(index) {
         if (confirm('Supprimer cette mesure ?')) {
@@ -512,29 +550,7 @@ function initializeApp() {
     };
 
     window.editTemp = function(index) {
-        editingIndex = index;
-        const temp = temperatures[index];
-        originalTimestamp = temp.timestamp;
-        editingTimestamp = temp.timestamp;
-
-        // Set roulettes pour éditer temp
-        config.degrees.currentValue = Math.floor(temp.value);
-        const decimal = (temp.value % 1) * 100;
-        config.dixiemes.currentValue = Math.floor(decimal / 10);
-        config.unites.currentValue = Math.round(decimal % 10);
-
-        renderSelector(config.degrees);
-        renderSelector(config.dixiemes);
-        renderSelector(config.unites);
-        initSwipe(config.degrees);
-        initSwipe(config.dixiemes);
-        initSwipe(config.unites);
-        updateCurrentDisplay();
-
-        showDateModal(editingTimestamp);
-
-        saveButton.textContent = 'Modifier & Enregistrer';
-        saveButton.classList.add('saving');
+        showEditModal(index);
     };
 
     window.clearAllTemps = function() {
@@ -548,14 +564,8 @@ function initializeApp() {
     clearButton.addEventListener('click', window.clearAllTemps);
     addManualBtn.addEventListener('click', showAddManualModal);
 
-    // ENREGISTREMENT
+    // ENREGISTREMENT (Simplifié : Seulement pour ajouts neufs, éditions dans modal)
     saveButton.addEventListener('click', () => {
-        if (editingIndex >= 0) {
-            if (!editingTimestamp) {
-                editingTimestamp = originalTimestamp || new Date().toISOString();
-            }
-        }
-
         const degrees = config.degrees.currentValue;
         const dixiemes = config.dixiemes.currentValue / 10;
         const unites = config.unites.currentValue / 100;
@@ -563,24 +573,15 @@ function initializeApp() {
 
         const newEntry = {
             value: finalTemp,
-            timestamp: editingTimestamp || new Date().toISOString()
+            timestamp: new Date().toISOString()
         };
 
-        if (editingIndex >= 0) {
-            temperatures[editingIndex] = newEntry;
-            editingIndex = -1;
-            editingTimestamp = null;
-            originalTimestamp = null;
-            saveButton.textContent = `Modifié : ${finalTemp.toFixed(2)}°C`;
-        } else {
-            temperatures.push(newEntry);
-            saveButton.textContent = `Enregistré : ${finalTemp.toFixed(2)}°C`;
-        }
-        
+        temperatures.push(newEntry);
         localStorage.setItem('temperatures', JSON.stringify(temperatures));
         renderHistory();
         updateCurrentDisplay();
         
+        saveButton.textContent = `Enregistré : ${finalTemp.toFixed(2)}°C`;
         setTimeout(() => {
             config.degrees.currentValue = config.degrees.defaultValue;
             config.dixiemes.currentValue = config.dixiemes.defaultValue;
@@ -593,7 +594,6 @@ function initializeApp() {
             initSwipe(config.unites);
             updateCurrentDisplay();
             saveButton.textContent = "Enregistrer la Température";
-            saveButton.classList.remove('saving');
         }, 1500);
     });
 

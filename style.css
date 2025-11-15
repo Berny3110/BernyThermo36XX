@@ -1,4 +1,4 @@
-/* style.css - Version Épurée & Moderne */
+/* style.css - Version Épurée & Moderne (avec Fixes Touch Targets) */
 
 :root {
     /* Thème Clair (Défaut) */
@@ -10,7 +10,7 @@
     --text-muted: #64748b;       /* Gris moyen */
     --border-color: #e2e8f0;     /* Bordures subtiles */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Ombre légère */
-    --selector-height: 90px;     /* +10px pour doigts Android */
+    --selector-height: 110px;    /* +20px pour doigts épais (fix touch) */
 }
 
 /* Thème Sombre */
@@ -36,6 +36,7 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     transition: background 0.3s ease;
+    overscroll-behavior: contain; /* Fix : Anti-scroll page pendant swipe roulette */
 }
 
 .app-container {
@@ -202,7 +203,7 @@ h2 {
     font-weight: 400;
 }
 
-/* Sélecteur (taille boostée pour Android) */
+/* Sélecteur (taille boostée pour Android + Fix Touch) */
 .temperature-selector-container {
     display: flex;
     align-items: center;
@@ -218,7 +219,7 @@ h2 {
 
 .selector {
     text-align: center;
-    width: 80px; /* +10px pour doigts Android */
+    width: 100px; /* +20px pour doigts Android (fix touch) */
     height: var(--selector-height);
     overflow: hidden;
     position: relative;
@@ -392,7 +393,7 @@ h2 {
     gap: 8px;
 }
 
-#date-input, #add-date-input {
+#date-input, #add-date-input, #edit-date-input {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-color);
@@ -427,16 +428,16 @@ h2 {
     position: relative;
 }
 
-#modal-ok, #add-manual-ok {
+#modal-ok, #add-manual-ok, #edit-ok {
     background: var(--success-color);
     color: white;
 }
 
-#modal-ok:hover, #add-manual-ok:hover {
+#modal-ok:hover, #add-manual-ok:hover, #edit-ok:hover {
     background: #059669;
 }
 
-#modal-ok.validating::after, #add-manual-ok.validating::after {
+#modal-ok.validating::after, #add-manual-ok.validating::after, #edit-ok.validating::after {
     content: '';
     position: absolute;
     right: 10px;
@@ -455,12 +456,12 @@ h2 {
     100% { transform: translateY(-50%) rotate(360deg); }
 }
 
-#modal-cancel, #add-manual-cancel {
+#modal-cancel, #add-manual-cancel, #edit-cancel {
     background: var(--border-color);
     color: var(--text-color);
 }
 
-#modal-cancel:hover, #add-manual-cancel:hover {
+#modal-cancel:hover, #add-manual-cancel:hover, #edit-cancel:hover {
     background: #cbd5e1;
 }
 
@@ -483,12 +484,21 @@ h2 {
         order: 2; /* Bas */
     }
     
+    :root {
+        --selector-height: 120px; /* Extra mobile (fix touch) */
+    }
+    
     .selector {
-        width: 90px; /* +20px extra sur Android portrait */
+        width: 110px; /* +20px extra sur Android portrait */
     }
     
     .value {
-        font-size: 2.8em; /* +0.3em extra pour visibilité */
+        font-size: 3em; /* +0.3em extra pour visibilité */
+        line-height: var(--selector-height);
+    }
+    
+    .scroll-area {
+        touch-action: pan-y; /* Fix : Force swipe vertical, ignore page scroll */
     }
     
     #monthly-chart {
@@ -515,5 +525,10 @@ h2 {
 
     .manual .temperature-selector-container {
         gap: 3px;
+    }
+
+    .temperature-list {
+        max-height: 250px; /* Fix : Réduit pour graphe, mais scroll séparé */
+        -webkit-overflow-scrolling: touch; /* Scroll natif iOS/Android */
     }
 }
