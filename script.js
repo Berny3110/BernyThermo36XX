@@ -1,4 +1,4 @@
-// script.js (Version Complète : Temps Réel + Journal Bord + Mobile Fix)
+// script.js (Version Ordre Décroissant & Wrapping Seamless - CORRIGÉ)
 
 // --- LOGIQUE PRINCIPALE ---
 
@@ -98,12 +98,13 @@ function initializeApp() {
         if (chart) updateGraph();
     });
 
-    // RENDU ROULETTE
+    // RENDU ROULETTE (FIX : Ordre décroissant pour "4 au-dessus de 3")
     function renderSelector(selectorConfig) {
         const { element, min, max, step, format, buffer, currentValue } = selectorConfig;
         const totalValues = (max - min) / step + 1;
         element.innerHTML = '';
 
+        // Dummies haut
         for (let i = 0; i < buffer; i++) {
             const dummy = document.createElement('div');
             dummy.classList.add('value', 'dummy');
@@ -111,7 +112,8 @@ function initializeApp() {
             element.appendChild(dummy);
         }
 
-        for (let i = min; i <= max; i += step) {
+        // FIX ORDRE : Render en décroissant pour wheel "4 au-dessus de 3" (haut = grand, bas = petit)
+        for (let i = max; i >= min; i -= step) {
             const valueEl = document.createElement('div');
             valueEl.classList.add('value');
             valueEl.setAttribute('data-value', i);
@@ -120,6 +122,7 @@ function initializeApp() {
             element.appendChild(valueEl);
         }
 
+        // Dummies bas
         for (let i = 0; i < buffer; i++) {
             const dummy = document.createElement('div');
             dummy.classList.add('value', 'dummy');
@@ -127,7 +130,8 @@ function initializeApp() {
             element.appendChild(dummy);
         }
 
-        const offsetIndex = (currentValue - min) / step;
+        // Position initial (ajustée pour ordre décroissant)
+        const offsetIndex = (max - currentValue) / step; // Inversé pour décroissant
         if (offsetIndex >= 0 && offsetIndex < totalValues) {
             const fullIndex = buffer + offsetIndex;
             const children = element.children;
@@ -140,8 +144,8 @@ function initializeApp() {
         }
     }
 
-    // INIT SWIPE
-    function initSwipe(selectorConfig) {
+    // INIT SWIPE (FIX : Direction up = -valeur, Wrapping sans jump + CORRECTION SENS & VALEUR)
+    function initSwipe(selectorConfig, isAddModal = false) {
         const { element, min, max, step, buffer } = selectorConfig;
         let startY = 0;
         let currentY = 0;
@@ -150,13 +154,17 @@ function initializeApp() {
 
         function updateDisplay(newIndex) {
             const children = element.querySelectorAll('.value');
-            const dataIndex = newIndex - buffer;
-            const valueIndex = Math.min(Math.max(0, dataIndex), totalValues - 1);
-            const newValue = min + valueIndex * step;
+            let dataIndex = newIndex - buffer;
+            // FIX WRAPPING : Modulo pour boucle infinie (géré négatif)
+            const valueIndex = ((dataIndex % totalValues) + totalValues) % totalValues;
+            // CORRECTION : Pour ordre décroissant, newValue = max - valueIndex * step
+            const newValue = max - valueIndex * step;
 
             children.forEach((child, index) => {
                 child.classList.remove('current-value');
-                if (index === newIndex) {
+                // FIX INDEX WRAP : Pour ordre décroissant, index wrap
+                const wrappedIndex = ((index - buffer) % totalValues + totalValues) % totalValues + buffer;
+                if (wrappedIndex === newIndex) {
                     child.classList.add('current-value');
                 }
             });
@@ -165,8 +173,12 @@ function initializeApp() {
             const offset = newIndex * SELECTOR_HEIGHT;
             element.style.transform = `translateY(-${offset}px)`;
 
-            updateCurrentDisplay();
-            updateAddCurrentDisplay(); // Si modal ouverte
+            // Mise à jour du display approprié
+            if (isAddModal) {
+                updateAddCurrentDisplay();
+            } else {
+                updateCurrentDisplay();
+            }
         }
 
         updateDisplay(currentIndex);
@@ -192,6 +204,7 @@ function initializeApp() {
         function drag(e) {
             e.preventDefault();
             currentY = getCoordsY(e);
+            // CORRECTION SENS : diff = startY - currentY (inversion pour geste naturel : swipe down → +valeur)
             const diff = startY - currentY;
             const currentOffset = currentIndex * SELECTOR_HEIGHT;
             const newOffset = currentOffset + diff;
@@ -207,13 +220,15 @@ function initializeApp() {
             
             element.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             
+            // CORRECTION SENS : Même diff inversé
             const diff = startY - currentY;
             const stepsMoved = Math.round(diff / SELECTOR_HEIGHT);
 
             let newIndex = currentIndex + stepsMoved;
-            const minIndex = buffer;
-            const maxIndex = buffer + totalValues - 1;
-            newIndex = Math.min(Math.max(minIndex, newIndex), maxIndex);
+            // FIX WRAPPING : Modulo sur totalValues (buffer neutralisé)
+            const dataOffset = newIndex - buffer;
+            const wrappedOffset = ((dataOffset % totalValues) + totalValues) % totalValues;
+            newIndex = wrappedOffset + buffer;
 
             currentIndex = newIndex;
             updateDisplay(currentIndex);
@@ -347,7 +362,7 @@ function initializeApp() {
         });
     }
 
-    // FONCTIONS MODAL ÉDITION (no auto-save, temp editable après)
+    // FONCTIONS MODAL ÉDITION (no auto-save)
     function showDateModal(initialDate) {
         originalTimestamp = initialDate;
         editingTimestamp = initialDate;
@@ -381,7 +396,7 @@ function initializeApp() {
             }
             modalOk.classList.remove('validating');
             hideDateModal();
-            // Pas d'auto-save : User édite temp maintenant
+            // User édite temp maintenant
         }, 500);
     });
 
@@ -420,9 +435,9 @@ function initializeApp() {
         renderSelector(addConfig.degrees);
         renderSelector(addConfig.dixiemes);
         renderSelector(addConfig.unites);
-        initSwipe(addConfig.degrees);
-        initSwipe(addConfig.dixiemes);
-        initSwipe(addConfig.unites);
+        initSwipe(addConfig.degrees, true); // true pour modal ajout
+        initSwipe(addConfig.dixiemes, true);
+        initSwipe(addConfig.unites, true);
         updateAddCurrentDisplay();
 
         const now = new Date();
@@ -502,7 +517,7 @@ function initializeApp() {
         originalTimestamp = temp.timestamp;
         editingTimestamp = temp.timestamp;
 
-        // Set roulettes pour éditer temp (priorité)
+        // Set roulettes pour éditer temp
         config.degrees.currentValue = Math.floor(temp.value);
         const decimal = (temp.value % 1) * 100;
         config.dixiemes.currentValue = Math.floor(decimal / 10);
@@ -516,7 +531,6 @@ function initializeApp() {
         initSwipe(config.unites);
         updateCurrentDisplay();
 
-        // Modal date (optionnelle, après temp)
         showDateModal(editingTimestamp);
 
         saveButton.textContent = 'Modifier & Enregistrer';

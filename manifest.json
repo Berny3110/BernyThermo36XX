@@ -2,7 +2,7 @@
   "name": "Mon Thermomètre Corporel",
   "short_name": "Thermo",
   "description": "Journal de bord pour suivre tes températures corporelles",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",

@@ -10,7 +10,7 @@
     --text-muted: #64748b;       /* Gris moyen */
     --border-color: #e2e8f0;     /* Bordures subtiles */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Ombre légère */
-    --selector-height: 80px;
+    --selector-height: 90px;     /* +10px pour doigts Android */
 }
 
 /* Thème Sombre */
@@ -202,7 +202,7 @@ h2 {
     font-weight: 400;
 }
 
-/* Sélecteur (collage décimales + °C) */
+/* Sélecteur (taille boostée pour Android) */
 .temperature-selector-container {
     display: flex;
     align-items: center;
@@ -218,7 +218,7 @@ h2 {
 
 .selector {
     text-align: center;
-    width: 70px; /* Plus compact */
+    width: 80px; /* +10px pour doigts Android */
     height: var(--selector-height);
     overflow: hidden;
     position: relative;
@@ -263,7 +263,7 @@ h2 {
 .value {
     height: var(--selector-height);
     line-height: var(--selector-height);
-    font-size: 2.2em;
+    font-size: 2.5em; /* +0.3em pour visibilité Android */
     font-weight: 300;
     color: var(--text-muted);
     user-select: none;
@@ -484,11 +484,11 @@ h2 {
     }
     
     .selector {
-        width: 60px;
+        width: 90px; /* +20px extra sur Android portrait */
     }
     
     .value {
-        font-size: 1.8em;
+        font-size: 2.8em; /* +0.3em extra pour visibilité */
     }
     
     #monthly-chart {
@@ -510,10 +510,10 @@ h2 {
     }
 
     .temperature-selector-container {
-        gap: 2px;
+        gap: 3px; /* Légèrement plus serré mobile */
     }
 
     .manual .temperature-selector-container {
-        gap: 2px;
+        gap: 3px;
     }
 }
