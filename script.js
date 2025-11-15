@@ -1,8 +1,9 @@
-// script.js (Version Réécrite : Modal Unifié Édition + Fixes UX)
+// script.js - Version Finale : Thermomètre Corporel (Roue Multi-Visibles + Modal Unifié + Tous Fixes)
 
 // --- LOGIQUE PRINCIPALE ---
 
 function initializeApp() {
+    // Refs Principales
     const degreesScroll = document.getElementById('degrees-scroll');
     const dixiemesScroll = document.getElementById('dixiemes-scroll');
     const unitesScroll = document.getElementById('unites-scroll');
@@ -15,7 +16,7 @@ function initializeApp() {
     const chartCanvas = document.getElementById('monthly-chart');
     const chartTitle = document.getElementById('chart-title');
 
-    // Modal Ajout Manuel refs
+    // Modal Ajout Manuel
     const addManualModal = document.getElementById('add-manual-modal');
     const addDateInput = document.getElementById('add-date-input');
     const addManualOk = document.getElementById('add-manual-ok');
@@ -25,7 +26,7 @@ function initializeApp() {
     const addUnitesScroll = document.getElementById('add-unites-scroll');
     const addCurrentDisplay = document.getElementById('add-current-display');
 
-    // Modal Édition refs (Nouveau : Unifié Date + Temp)
+    // Modal Édition Unifié
     const editModal = document.getElementById('edit-modal');
     const editDateInput = document.getElementById('edit-date-input');
     const editOk = document.getElementById('edit-ok');
@@ -35,64 +36,18 @@ function initializeApp() {
     const editUnitesScroll = document.getElementById('edit-unites-scroll');
     const editCurrentDisplay = document.getElementById('edit-current-display');
 
-    // Configuration (3 roulettes principales)
-    const BUFFER = 5;
-    const SELECTOR_HEIGHT = 80;
-    const config = {
-        degrees: {
-            element: degreesScroll, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36,
-            format: (val) => val.toString().padStart(2, '0'),
-            buffer: BUFFER
-        },
-        dixiemes: {
-            element: dixiemesScroll, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        },
-        unites: {
-            element: unitesScroll, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        }
-    };
+    // Configs Roulettes (Centralisée)
+    const BUFFER = 10;  // x2 pour wrapping multi-visibles
+    const ITEM_HEIGHT = 60;  // Hauteur par valeur
+    const createConfig = (scrolls) => ({
+        degrees: { element: scrolls.degrees, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36, format: (val) => val.toString().padStart(2, '0'), buffer: BUFFER },
+        dixiemes: { element: scrolls.dixiemes, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3, format: (val) => val.toString().padStart(1, '0'), buffer: BUFFER },
+        unites: { element: scrolls.unites, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0, format: (val) => val.toString().padStart(1, '0'), buffer: BUFFER }
+    });
 
-    // Config roulettes ajout manuel (copie)
-    const addConfig = {
-        degrees: {
-            element: addDegreesScroll, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36,
-            format: (val) => val.toString().padStart(2, '0'),
-            buffer: BUFFER
-        },
-        dixiemes: {
-            element: addDixiemesScroll, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        },
-        unites: {
-            element: addUnitesScroll, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        }
-    };
-
-    // Config roulettes édition (copie : Nouveau)
-    const editConfig = {
-        degrees: {
-            element: editDegreesScroll, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36,
-            format: (val) => val.toString().padStart(2, '0'),
-            buffer: BUFFER
-        },
-        dixiemes: {
-            element: editDixiemesScroll, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        },
-        unites: {
-            element: editUnitesScroll, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0,
-            format: (val) => val.toString().padStart(1, '0'),
-            buffer: BUFFER
-        }
-    };
+    const config = createConfig({ degrees: degreesScroll, dixiemes: dixiemesScroll, unites: unitesScroll });
+    const addConfig = createConfig({ degrees: addDegreesScroll, dixiemes: addDixiemesScroll, unites: addUnitesScroll });
+    const editConfig = createConfig({ degrees: editDegreesScroll, dixiemes: editDixiemesScroll, unites: editUnitesScroll });
 
     let temperatures = JSON.parse(localStorage.getItem('temperatures')) || [];
     if (temperatures.length > 100) {
@@ -100,10 +55,9 @@ function initializeApp() {
         localStorage.setItem('temperatures', JSON.stringify(temperatures));
     }
     let editingIndex = -1;
-
     let chart = null;
 
-    // THÈME SOMBRÉ
+    // Thème
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     const toggleIcon = themeToggle.querySelector('i');
@@ -119,7 +73,7 @@ function initializeApp() {
         if (chart) updateGraph();
     });
 
-    // RENDU ROULETTE (FIX : Ordre décroissant pour "4 au-dessus de 3")
+    // Render Roue (Ordre Décroissant + Centrage Multi-Visibles)
     function renderSelector(selectorConfig) {
         const { element, min, max, step, format, buffer, currentValue } = selectorConfig;
         const totalValues = (max - min) / step + 1;
@@ -129,17 +83,17 @@ function initializeApp() {
         for (let i = 0; i < buffer; i++) {
             const dummy = document.createElement('div');
             dummy.classList.add('value', 'dummy');
-            dummy.style.height = `${SELECTOR_HEIGHT}px`;
+            dummy.style.height = `${ITEM_HEIGHT}px`;
             element.appendChild(dummy);
         }
 
-        // FIX ORDRE : Render en décroissant pour wheel "4 au-dessus de 3" (haut = grand, bas = petit)
+        // Valeurs en décroissant
         for (let i = max; i >= min; i -= step) {
             const valueEl = document.createElement('div');
             valueEl.classList.add('value');
             valueEl.setAttribute('data-value', i);
             valueEl.textContent = format(i);
-            valueEl.style.height = `${SELECTOR_HEIGHT}px`;
+            valueEl.style.height = `${ITEM_HEIGHT}px`;
             element.appendChild(valueEl);
         }
 
@@ -147,58 +101,52 @@ function initializeApp() {
         for (let i = 0; i < buffer; i++) {
             const dummy = document.createElement('div');
             dummy.classList.add('value', 'dummy');
-            dummy.style.height = `${SELECTOR_HEIGHT}px`;
+            dummy.style.height = `${ITEM_HEIGHT}px`;
             element.appendChild(dummy);
         }
 
-        // Position initial (ajustée pour ordre décroissant)
-        const offsetIndex = (max - currentValue) / step; // Inversé pour décroissant
+        // Position initiale centrée
+        const offsetIndex = (max - currentValue) / step;
         if (offsetIndex >= 0 && offsetIndex < totalValues) {
             const fullIndex = buffer + offsetIndex;
             const children = element.children;
             if (children[fullIndex]) {
                 children[fullIndex].classList.add('current-value');
-                const initialOffset = fullIndex * SELECTOR_HEIGHT;
-                element.style.transform = `translateY(-${initialOffset}px)`;
+                const centerOffset = (fullIndex - 1.5) * ITEM_HEIGHT;  // Milieu roue
+                element.style.transform = `translateY(-${centerOffset}px)`;
                 selectorConfig.startIndex = fullIndex;
             }
         }
     }
 
-    // INIT SWIPE (FIX : Direction up = -valeur, Wrapping sans jump + CORRECTION SENS & VALEUR)
+    // Init Swipe (Wrapping + Anti-Scroll + Centrage)
     function initSwipe(selectorConfig, isModal = false) {
         const { element, min, max, step, buffer } = selectorConfig;
         let startY = 0;
         let currentY = 0;
-        let currentIndex = selectorConfig.startIndex || buffer;
+        let currentIndex = selectorConfig.startIndex || buffer + (max - selectorConfig.defaultValue) / step;
         const totalValues = (max - min) / step + 1;
 
         function updateDisplay(newIndex) {
             const children = element.querySelectorAll('.value');
             let dataIndex = newIndex - buffer;
-            // FIX WRAPPING : Modulo pour boucle infinie (géré négatif)
             const valueIndex = ((dataIndex % totalValues) + totalValues) % totalValues;
-            // CORRECTION : Pour ordre décroissant, newValue = max - valueIndex * step
             const newValue = max - valueIndex * step;
 
             children.forEach((child, index) => {
                 child.classList.remove('current-value');
-                // FIX INDEX WRAP : Pour ordre décroissant, index wrap
-                const wrappedIndex = ((index - buffer) % totalValues + totalValues) % totalValues + buffer;
-                if (wrappedIndex === newIndex) {
-                    child.classList.add('current-value');
-                }
             });
+            const wrappedIndex = ((newIndex - buffer) % totalValues + totalValues) % totalValues + buffer;
+            if (children[wrappedIndex]) children[wrappedIndex].classList.add('current-value');
 
             selectorConfig.currentValue = newValue;
-            const offset = newIndex * SELECTOR_HEIGHT;
-            element.style.transform = `translateY(-${offset}px)`;
+            const centerOffset = (newIndex - 1.5) * ITEM_HEIGHT;
+            element.style.transform = `translateY(-${centerOffset}px)`;
 
-            // Mise à jour du display approprié
+            // Update display
             if (isModal) {
-                // Différencie add vs edit via global ou param (ici, assume add/edit ont même func pour simplicité)
-                if (document.getElementById('add-current-display')) updateAddCurrentDisplay();
-                if (document.getElementById('edit-current-display')) updateEditCurrentDisplay();
+                if (addCurrentDisplay) updateAddCurrentDisplay();
+                if (editCurrentDisplay) updateEditCurrentDisplay();
             } else {
                 updateCurrentDisplay();
             }
@@ -207,16 +155,14 @@ function initializeApp() {
         updateDisplay(currentIndex);
 
         function getCoordsY(e) {
-            if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
-            if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientY;
-            return e.clientY;
+            return (e.touches?.[0]?.clientY || e.changedTouches?.[0]?.clientY || e.clientY);
         }
 
         function startDrag(e) {
             e.preventDefault();
+            e.stopPropagation();
             startY = getCoordsY(e);
             element.style.transition = 'none';
-
             document.addEventListener('mousemove', drag);
             document.addEventListener('touchmove', drag, { passive: false });
             document.addEventListener('mouseup', endDrag);
@@ -226,15 +172,17 @@ function initializeApp() {
 
         function drag(e) {
             e.preventDefault();
+            e.stopPropagation();
             currentY = getCoordsY(e);
-            // CORRECTION SENS : diff = startY - currentY (inversion pour geste naturel : swipe down → +valeur)
             const diff = startY - currentY;
-            const currentOffset = currentIndex * SELECTOR_HEIGHT;
+            const currentOffset = (currentIndex - 1.5) * ITEM_HEIGHT;
             const newOffset = currentOffset + diff;
             element.style.transform = `translateY(-${newOffset}px)`;
         }
 
         function endDrag(e) {
+            e.preventDefault();
+            e.stopPropagation();
             document.removeEventListener('mousemove', drag);
             document.removeEventListener('touchmove', drag);
             document.removeEventListener('mouseup', endDrag);
@@ -243,12 +191,9 @@ function initializeApp() {
             
             element.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             
-            // CORRECTION SENS : Même diff inversé
             const diff = startY - currentY;
-            const stepsMoved = Math.round(diff / SELECTOR_HEIGHT);
-
+            const stepsMoved = Math.round(diff / ITEM_HEIGHT);
             let newIndex = currentIndex + stepsMoved;
-            // FIX WRAPPING : Modulo sur totalValues (buffer neutralisé)
             const dataOffset = newIndex - buffer;
             const wrappedOffset = ((dataOffset % totalValues) + totalValues) % totalValues;
             newIndex = wrappedOffset + buffer;
@@ -261,30 +206,27 @@ function initializeApp() {
         element.addEventListener('touchstart', startDrag, { passive: false });
     }
 
-    // MAJ AFFICHAGE COURANT (main)
+    // Updates Displays
     function updateCurrentDisplay() {
         const finalTemp = config.degrees.currentValue + (config.dixiemes.currentValue / 10) + (config.unites.currentValue / 100);
         currentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
     }
 
-    // MAJ AFFICHAGE COURANT (add modal)
     function updateAddCurrentDisplay() {
         const finalTemp = addConfig.degrees.currentValue + (addConfig.dixiemes.currentValue / 10) + (addConfig.unites.currentValue / 100);
         addCurrentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
     }
 
-    // MAJ AFFICHAGE COURANT (edit modal : Nouveau)
     function updateEditCurrentDisplay() {
         const finalTemp = editConfig.degrees.currentValue + (editConfig.dixiemes.currentValue / 10) + (editConfig.unites.currentValue / 100);
         editCurrentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
     }
 
-    // TRI CHRONO HISTORIQUE (asc : oldest first)
+    // Historique & Graph
     function sortTemperatures() {
         temperatures.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     }
 
-    // RENDU HISTORIQUE (avec group jour)
     function renderHistory() {
         sortTemperatures();
         temperatureList.innerHTML = '';
@@ -310,7 +252,7 @@ function initializeApp() {
             }
 
             const li = document.createElement('li');
-            const dateStr = date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            const dateStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
             
             li.innerHTML = `
                 <div>
@@ -328,7 +270,6 @@ function initializeApp() {
         updateGraph();
     }
 
-    // GRAPHE MENSUEL
     function updateGraph() {
         if (temperatures.length === 0) return;
 
@@ -391,7 +332,7 @@ function initializeApp() {
         });
     }
 
-    // FONCTIONS MODAL AJOUT MANUEL
+    // Modal Ajout Manuel
     function showAddManualModal() {
         addConfig.degrees.currentValue = addConfig.degrees.defaultValue;
         addConfig.dixiemes.currentValue = addConfig.dixiemes.defaultValue;
@@ -399,7 +340,7 @@ function initializeApp() {
         renderSelector(addConfig.degrees);
         renderSelector(addConfig.dixiemes);
         renderSelector(addConfig.unites);
-        initSwipe(addConfig.degrees, true); // true pour modal ajout
+        initSwipe(addConfig.degrees, true);
         initSwipe(addConfig.dixiemes, true);
         initSwipe(addConfig.unites, true);
         updateAddCurrentDisplay();
@@ -430,15 +371,8 @@ function initializeApp() {
                 }
             }
 
-            const degrees = addConfig.degrees.currentValue;
-            const dixiemes = addConfig.dixiemes.currentValue / 10;
-            const unites = addConfig.unites.currentValue / 100;
-            const finalTemp = degrees + dixiemes + unites;
-
-            const newEntry = {
-                value: finalTemp,
-                timestamp: manualTimestamp
-            };
+            const finalTemp = addConfig.degrees.currentValue + (addConfig.dixiemes.currentValue / 10) + (addConfig.unites.currentValue / 100);
+            const newEntry = { value: finalTemp, timestamp: manualTimestamp };
 
             temperatures.push(newEntry);
             localStorage.setItem('temperatures', JSON.stringify(temperatures));
@@ -453,25 +387,21 @@ function initializeApp() {
         }, 500);
     });
 
-    addManualCancel.addEventListener('click', () => {
-        hideAddManualModal();
-    });
-
+    addManualCancel.addEventListener('click', hideAddManualModal);
     addDateInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') addManualOk.click();
         if (e.key === 'Escape') addManualCancel.click();
     });
-
     window.addEventListener('click', (e) => {
         if (e.target === addManualModal) addManualCancel.click();
     });
 
-    // FONCTIONS MODAL ÉDITION (Nouveau : Unifié)
+    // Modal Édition Unifié
     function showEditModal(index) {
         editingIndex = index;
         const temp = temperatures[index];
 
-        // Préremplir date
+        // Date
         const date = new Date(temp.timestamp);
         const minDate = new Date(date.getFullYear() - 1, 0, 1).toISOString().slice(0, 16);
         const maxDate = new Date(date.getFullYear() + 1, 11, 31).toISOString().slice(0, 16);
@@ -479,7 +409,7 @@ function initializeApp() {
         editDateInput.max = maxDate;
         editDateInput.value = date.toISOString().slice(0, 16);
 
-        // Préremplir temp roulettes
+        // Temp
         editConfig.degrees.currentValue = Math.floor(temp.value);
         const decimal = (temp.value % 1) * 100;
         editConfig.dixiemes.currentValue = Math.floor(decimal / 10);
@@ -487,12 +417,11 @@ function initializeApp() {
         renderSelector(editConfig.degrees);
         renderSelector(editConfig.dixiemes);
         renderSelector(editConfig.unites);
-        initSwipe(editConfig.degrees, true); // true = modal mode
+        initSwipe(editConfig.degrees, true);
         initSwipe(editConfig.dixiemes, true);
         initSwipe(editConfig.unites, true);
         updateEditCurrentDisplay();
 
-        // Show modal
         editModal.style.display = 'flex';
         editDateInput.focus();
     }
@@ -514,11 +443,7 @@ function initializeApp() {
                 }
             }
 
-            const degrees = editConfig.degrees.currentValue;
-            const dixiemes = editConfig.dixiemes.currentValue / 10;
-            const unites = editConfig.unites.currentValue / 100;
-            const finalTemp = degrees + dixiemes + unites;
-
+            const finalTemp = editConfig.degrees.currentValue + (editConfig.dixiemes.currentValue / 10) + (editConfig.unites.currentValue / 100);
             temperatures[editingIndex] = { value: finalTemp, timestamp: editTimestamp };
             localStorage.setItem('temperatures', JSON.stringify(temperatures));
             renderHistory();
@@ -527,20 +452,16 @@ function initializeApp() {
         }, 500);
     });
 
-    editCancel.addEventListener('click', () => {
-        hideEditModal();
-    });
-
+    editCancel.addEventListener('click', hideEditModal);
     editDateInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') editOk.click();
         if (e.key === 'Escape') editCancel.click();
     });
-
     window.addEventListener('click', (e) => {
         if (e.target === editModal) editCancel.click();
     });
 
-    // ACTIONS HISTORIQUE
+    // Actions Globales
     window.deleteTemp = function(index) {
         if (confirm('Supprimer cette mesure ?')) {
             temperatures.splice(index, 1);
@@ -564,17 +485,10 @@ function initializeApp() {
     clearButton.addEventListener('click', window.clearAllTemps);
     addManualBtn.addEventListener('click', showAddManualModal);
 
-    // ENREGISTREMENT (Simplifié : Seulement pour ajouts neufs, éditions dans modal)
+    // Save Principal (Ajouts Neufs)
     saveButton.addEventListener('click', () => {
-        const degrees = config.degrees.currentValue;
-        const dixiemes = config.dixiemes.currentValue / 10;
-        const unites = config.unites.currentValue / 100;
-        const finalTemp = degrees + dixiemes + unites;
-
-        const newEntry = {
-            value: finalTemp,
-            timestamp: new Date().toISOString()
-        };
+        const finalTemp = config.degrees.currentValue + (config.dixiemes.currentValue / 10) + (config.unites.currentValue / 100);
+        const newEntry = { value: finalTemp, timestamp: new Date().toISOString() };
 
         temperatures.push(newEntry);
         localStorage.setItem('temperatures', JSON.stringify(temperatures));
@@ -597,7 +511,7 @@ function initializeApp() {
         }, 1500);
     });
 
-    // --- INITIALISATION ---
+    // Init
     renderSelector(config.degrees);
     renderSelector(config.dixiemes);
     renderSelector(config.unites);
@@ -608,5 +522,5 @@ function initializeApp() {
     renderHistory();
 }
 
-// Point d'entrée
+// DOM Ready
 document.addEventListener('DOMContentLoaded', initializeApp);
