@@ -95,8 +95,9 @@ h2 {
 .temperature-list {
     list-style: none;
     padding: 0;
-    max-height: 400px;
+    max-height: 300px; /* Réduit pour graphe */
     overflow-y: auto;
+    margin-bottom: 20px;
 }
 
 .temperature-list li {
@@ -119,6 +120,15 @@ h2 {
 
 .temperature-list li:last-child {
     border-bottom: none;
+}
+
+.day-separator {
+    font-style: italic;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 8px 0;
+    border-bottom: 2px dashed var(--border-color);
+    margin: 10px 0;
 }
 
 .temp-value {
@@ -147,46 +157,94 @@ h2 {
     background: rgba(59, 130, 246, 0.1);
 }
 
-.clear-btn {
+.clear-btn, .add-btn {
     width: 100%;
     padding: 10px;
-    background: #ef4444;
-    color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9em;
-    margin-top: 15px;
+    margin-top: 10px;
     transition: opacity 0.2s;
+}
+
+.clear-btn {
+    background: #ef4444;
+    color: white;
 }
 
 .clear-btn:hover {
     opacity: 0.9;
 }
 
-/* Sélecteur */
+.add-btn {
+    background: var(--success-color);
+    color: white;
+}
+
+.add-btn:hover {
+    opacity: 0.9;
+}
+
+/* Graphe */
+#monthly-chart {
+    width: 100% !important;
+    height: 200px !important;
+    margin-bottom: 10px;
+}
+
+.chart-title {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    font-weight: 400;
+}
+
+/* Sélecteur (collage décimales + °C) */
 .temperature-selector-container {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
-    gap: 10px;
+    gap: 5px; /* Gap normal pour degrés . dixiemes */
+}
+
+.manual .temperature-selector-container {
+    gap: 5px;
+    margin-bottom: 10px;
 }
 
 .selector {
     text-align: center;
-    width: 90px;
+    width: 70px; /* Plus compact */
     height: var(--selector-height);
     overflow: hidden;
     position: relative;
     border: 2px solid var(--border-color);
     border-radius: 12px;
     background: var(--panel-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dixiemes, .unites {
+    margin-left: 0; /* Pas de gap entre décimales */
+}
+
+.unit-label {
+    position: absolute;
+    bottom: -20px;
+    font-size: 0.8em;
+    color: var(--accent-color);
+    font-weight: 500;
+    line-height: 1;
 }
 
 .label {
     display: block;
-    font-size: 0.75em;
+    font-size: 0.7em;
     color: var(--text-muted);
     margin-bottom: 5px;
     position: absolute;
@@ -197,7 +255,7 @@ h2 {
 }
 
 .scroll-area {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animation plus fluide */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     height: 100%;
 }
 
@@ -213,12 +271,16 @@ h2 {
 .current-value {
     color: var(--accent-color);
     font-weight: 500;
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3); /* Glow subtil */
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .current-value {
+    text-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
 }
 
 .separator {
     font-size: 2.2em;
-    margin: 0 5px;
+    margin: 0 2px;
     font-weight: 300;
     line-height: var(--selector-height);
     color: var(--accent-color);
@@ -237,6 +299,11 @@ h2 {
     font-size: 1.5em;
     color: var(--success-color);
     font-weight: 400;
+}
+
+.manual .current-temp-display {
+    font-size: 1.2em;
+    margin-bottom: 10px;
 }
 
 /* Bouton Save */
@@ -282,7 +349,118 @@ h2 {
 
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    50% { transform: scale(1.02); }
+}
+
+/* Modals (général) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--panel-bg);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    text-align: center;
+    color: var(--text-color);
+    position: relative;
+}
+
+.modal-content h3 {
+    margin: 0 0 15px 0;
+    color: var(--accent-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#date-input, #add-date-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1em;
+    margin-bottom: 15px;
+    background: var(--panel-bg);
+    color: var(--text-color);
+    box-sizing: border-box;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    position: sticky;
+    bottom: 0;
+    background: var(--panel-bg);
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.modal-actions button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.2s;
+    min-width: 80px;
+    position: relative;
+}
+
+#modal-ok, #add-manual-ok {
+    background: var(--success-color);
+    color: white;
+}
+
+#modal-ok:hover, #add-manual-ok:hover {
+    background: #059669;
+}
+
+#modal-ok.validating::after, #add-manual-ok.validating::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+#modal-cancel, #add-manual-cancel {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+#modal-cancel:hover, #add-manual-cancel:hover {
+    background: #cbd5e1;
 }
 
 /* Responsive */
@@ -297,10 +475,36 @@ h2 {
     }
     
     .selector {
-        width: 80px;
+        width: 60px;
     }
     
     .value {
         font-size: 1.8em;
+    }
+    
+    #monthly-chart {
+        height: 150px !important;
+    }
+
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-content {
+        max-height: 90vh;
+        padding: 20px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .temperature-selector-container {
+        gap: 2px;
+    }
+
+    .manual .temperature-selector-container {
+        gap: 2px;
     }
 }

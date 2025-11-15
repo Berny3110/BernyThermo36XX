@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="app-container" id="main-app-content">
@@ -18,6 +19,14 @@
         <section class="history-panel">
             <h2><i class="fas fa-history"></i> Historique</h2>
             <ul id="temperature-list" class="temperature-list"></ul>
+            
+            <canvas id="monthly-chart" width="400" height="200"></canvas>
+            <div id="chart-title" class="chart-title">Évolution Mensuelle</div>
+            
+            <button id="add-manual-btn" class="add-btn" title="Ajouter un événement oublié">
+                <i class="fas fa-plus"></i> Ajouter Manuel
+            </button>
+            
             <button id="clear-history" class="clear-btn" title="Vider l'historique">
                 <i class="fas fa-trash"></i> Vider Tout
             </button>
@@ -34,18 +43,70 @@
 
                 <div class="separator">.<i class="fas fa-circle-dot"></i></div>
 
-                <div class="selector centiemes" id="centiemes-selector">
-                    <span class="label">Centièmes</span>
-                    <div class="scroll-area" id="centiemes-scroll"></div>
+                <div class="selector dixiemes" id="dixiemes-selector">
+                    <span class="label">Dixièmes</span>
+                    <div class="scroll-area" id="dixiemes-scroll"></div>
+                </div>
+
+                <div class="selector unites" id="unites-selector">
+                    <span class="label">Unités</span>
+                    <div class="scroll-area" id="unites-scroll"></div>
+                    <span class="unit-label">°C</span>
                 </div>
             </div>
 
             <div class="current-temp-display">
-                <span id="current-display">36.00°C</span>
+                <span id="current-display">36.30°C</span>
             </div>
 
             <button id="save-button">Enregistrer la Température</button>
         </section>
+    </div>
+
+    <!-- Modal pour Édition Date -->
+    <div id="date-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-calendar-alt"></i> Modifier la Date/Heure</h3>
+            <input type="datetime-local" id="date-input" step="1">
+            <div class="modal-actions">
+                <button id="modal-ok">OK</button>
+                <button id="modal-cancel">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour Ajout Manuel -->
+    <div id="add-manual-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-plus-circle"></i> Ajouter Événement Oublié</h3>
+            <input type="datetime-local" id="add-date-input" step="1">
+            <div class="temperature-selector-container manual">
+                <div class="selector degrees" id="add-degrees-selector">
+                    <span class="label">Degrés (°C)</span>
+                    <div class="scroll-area" id="add-degrees-scroll"></div>
+                </div>
+
+                <div class="separator">.<i class="fas fa-circle-dot"></i></div>
+
+                <div class="selector dixiemes" id="add-dixiemes-selector">
+                    <span class="label">Dixièmes</span>
+                    <div class="scroll-area" id="add-dixiemes-scroll"></div>
+                </div>
+
+                <div class="selector unites" id="add-unites-selector">
+                    <span class="label">Unités</span>
+                    <div class="scroll-area" id="add-unites-scroll"></div>
+                    <span class="unit-label">°C</span>
+                </div>
+            </div>
+            <div class="current-temp-display manual">
+                <span id="add-current-display">36.30°C</span>
+            </div>
+            <div class="modal-actions">
+                <button id="add-manual-ok">Ajouter</button>
+                <button id="add-manual-cancel">Annuler</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
