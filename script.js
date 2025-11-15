@@ -1,0 +1,201 @@
+// script.js (Version Simplifiée)
+
+// --- LOGIQUE PRINCIPALE DE L'APPLICATION ---
+
+function initializeApp() {
+    const degreesScroll = document.getElementById('degrees-scroll');
+    const centiemesScroll = document.getElementById('centiemes-scroll');
+    const saveButton = document.getElementById('save-button');
+    const temperatureList = document.getElementById('temperature-list');
+
+    // Configuration des SÉLECTEURS
+    const SELECTOR_HEIGHT = 80; 
+    const config = {
+        degrees: {
+            element: degreesScroll, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36,
+            format: (val) => val.toString().padStart(2, '0') 
+        },
+        centiemes: {
+            element: centiemesScroll, min: 0, max: 99, step: 1, defaultValue: 0, currentValue: 0,
+            format: (val) => val.toString().padStart(2, '0') 
+        }
+    };
+
+    let temperatures = JSON.parse(localStorage.getItem('temperatures')) || [];
+
+    // FONCTIONS de Rendu et de Swipe (Roulette) - (Le code de ces fonctions reste inchangé)
+    function renderSelector(selectorConfig) {
+        // ... (Code de renderSelector) ...
+        const { element, min, max, format, defaultValue } = selectorConfig;
+        element.innerHTML = '';
+        const buffer = 5; 
+        
+        for (let i = 0; i < buffer; i++) {
+            const dummy = document.createElement('div');
+            dummy.classList.add('value', 'dummy');
+            dummy.textContent = ''; 
+            dummy.style.height = `${SELECTOR_HEIGHT}px`;
+            element.appendChild(dummy);
+        }
+
+        let defaultIndex = -1;
+        
+        for (let i = min; i <= max; i += selectorConfig.step) {
+            const valueEl = document.createElement('div');
+            valueEl.classList.add('value');
+            valueEl.setAttribute('data-value', i);
+            valueEl.textContent = format(i);
+            valueEl.style.height = `${SELECTOR_HEIGHT}px`;
+            
+            if (i === defaultValue) {
+                valueEl.classList.add('current-value');
+                defaultIndex = element.children.length;
+            }
+            element.appendChild(valueEl);
+        }
+
+        for (let i = 0; i < buffer; i++) {
+            const dummy = document.createElement('div');
+            dummy.classList.add('value', 'dummy');
+            dummy.textContent = ''; 
+            dummy.style.height = `${SELECTOR_HEIGHT}px`;
+            element.appendChild(dummy);
+        }
+        
+        if (defaultIndex !== -1) {
+            const initialOffset = (defaultIndex - buffer) * SELECTOR_HEIGHT;
+            element.style.transform = `translateY(-${initialOffset}px)`;
+            selectorConfig.currentValue = defaultValue;
+            selectorConfig.startIndex = defaultIndex; 
+        }
+    }
+
+    function initSwipe(selectorConfig) {
+        // ... (Code de initSwipe) ...
+        const { element, min, max, step } = selectorConfig;
+        let startY = 0;
+        let currentY = 0;
+        let currentIndex = selectorConfig.startIndex;
+        const totalValues = (max - min) / step + 1;
+
+        function updateDisplay(newIndex) {
+            const children = element.querySelectorAll('.value');
+            const dataIndex = newIndex - selectorConfig.startIndex; 
+            const valueIndex = Math.min(Math.max(0, dataIndex), totalValues - 1); 
+            const newValue = min + valueIndex * step;
+
+            children.forEach((child, index) => {
+                child.classList.remove('current-value');
+                if (index === newIndex) {
+                    child.classList.add('current-value');
+                }
+            });
+            
+            selectorConfig.currentValue = newValue;
+            
+            const offset = (newIndex - (selectorConfig.startIndex)) * SELECTOR_HEIGHT;
+            element.style.transform = `translateY(-${offset}px)`;
+        }
+        
+        updateDisplay(currentIndex); 
+        
+        function startDrag(e) {
+            startY = e.clientY || (e.touches ? e.touches[0].clientY : e.changedTouches[0].clientY);
+            element.style.transition = 'none'; 
+            element.addEventListener('mousemove', drag);
+            element.addEventListener('touchmove', drag);
+            element.addEventListener('mouseup', endDrag);
+            element.addEventListener('touchend', endDrag);
+            element.addEventListener('mouseleave', endDrag); 
+        }
+
+        function drag(e) {
+            currentY = e.clientY || (e.touches ? e.touches[0].clientY : e.changedTouches[0].clientY);
+            
+            const diff = currentY - startY;
+            const currentOffset = (currentIndex - selectorConfig.startIndex) * SELECTOR_HEIGHT;
+            const newOffset = currentOffset - diff;
+            
+            element.style.transform = `translateY(-${newOffset}px)`;
+        }
+
+        function endDrag(e) {
+            element.removeEventListener('mousemove', drag);
+            element.removeEventListener('touchmove', drag);
+            element.removeEventListener('mouseup', endDrag);
+            element.removeEventListener('touchend', endDrag);
+            element.removeEventListener('mouseleave', endDrag);
+            
+            element.style.transition = 'transform 0.2s ease-out'; 
+            
+            const diff = currentY - startY;
+            const stepsMoved = Math.round(diff / SELECTOR_HEIGHT);
+
+            let newIndex = currentIndex - stepsMoved;
+            
+            const minIndex = selectorConfig.startIndex;
+            const maxIndex = selectorConfig.startIndex + totalValues - 1;
+            newIndex = Math.min(Math.max(minIndex, newIndex), maxIndex); 
+            
+            currentIndex = newIndex;
+            updateDisplay(currentIndex);
+        }
+
+        element.addEventListener('mousedown', startDrag);
+        element.addEventListener('touchstart', startDrag);
+    }
+    
+    // GESTION de l'HISTORIQUE
+    function renderHistory() {
+        temperatureList.innerHTML = '';
+        
+        if (temperatures.length === 0) {
+             temperatureList.innerHTML = '<li>Aucune température enregistrée.</li>';
+             return;
+        }
+        
+        temperatures.forEach((temp) => {
+            const li = document.createElement('li');
+            const date = new Date(temp.timestamp);
+            const dateStr = date.toLocaleDateString('fr-FR') + ' à ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            
+            li.innerHTML = `
+                <span>${dateStr}</span>
+                <span class="temp-value">${temp.value.toFixed(2)}°C</span>
+            `;
+            temperatureList.appendChild(li);
+        });
+    }
+
+    // GESTION de l'ENREGISTREMENT
+    saveButton.addEventListener('click', () => {
+        const degrees = config.degrees.currentValue;
+        const centiemes = config.centiemes.currentValue / 100;
+        const finalTemp = degrees + centiemes;
+
+        const newEntry = {
+            value: finalTemp,
+            timestamp: new Date().toISOString()
+        };
+
+        temperatures.unshift(newEntry);
+        
+        localStorage.setItem('temperatures', JSON.stringify(temperatures));
+        renderHistory();
+        
+        saveButton.textContent = `Enregistré : ${finalTemp.toFixed(2)}°C`;
+        setTimeout(() => {
+            saveButton.textContent = "Enregistrer la Température";
+        }, 1500);
+    });
+
+    // --- INITIALISATION DES COMPOSANTS ---
+    renderSelector(config.degrees);
+    renderSelector(config.centiemes);
+    initSwipe(config.degrees);
+    initSwipe(config.centiemes);
+    renderHistory();
+}
+
+// Point d'entrée : lance l'application directement au chargement
+document.addEventListener('DOMContentLoaded', initializeApp);

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Thermomètre Corporel Épuré</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container" id="main-app-content"> 
+        <section class="history-panel">
+            <h2>Historique</h2>
+            <ul id="temperature-list" class="temperature-list">
+                </ul>
+        </section>
+
+        <section class="input-panel">
+            <h2>Nouvelle Température</h2>
+            
+            <div class="temperature-selector-container">
+                <div class="selector degrees" id="degrees-selector">
+                    <span class="label">Degrés (°C)</span>
+                    <div class="scroll-area" id="degrees-scroll">
+                        <div class="value current-value" data-value="36">36</div>
+                    </div>
+                </div>
+
+                <div class="separator">.</div>
+
+                <div class="selector centièmes" id="centiemes-selector">
+                    <span class="label">Centièmes</span>
+                    <div class="scroll-area" id="centiemes-scroll">
+                        <div class="value current-value" data-value="00">00</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="save-button">Enregistrer la Température</button>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

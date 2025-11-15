@@ -1,0 +1,153 @@
+/* style.css */
+:root {
+    /* Variables pour un style facile à maintenir */
+    --main-bg: #f4f4f4;          /* Arrière-plan général très clair */
+    --panel-bg: #ffffff;         /* Fond des cartes/sections */
+    --accent-color: #007bff;     /* Bleu (pour les titres et boutons) */
+    --text-color: #333;          /* Couleur principale du texte */
+    --border-color: #ddd;        /* Couleur des bordures et séparateurs */
+    --selector-height: 80px;     /* Hauteur de l'élément sélectionné dans la roulette */
+}
+
+/* --- Base et Conteneur --- */
+
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--main-bg);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    gap: 40px; /* Espace entre l'historique et la saisie */
+    max-width: 900px;
+    width: 100%;
+    /* Flex-wrap pour une adaptation basique sur petit écran */
+    flex-wrap: wrap; 
+}
+
+/* --- Style des Panneaux (Historique et Saisie) --- */
+
+section {
+    background-color: var(--panel-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Légère ombre pour effet de carte */
+    flex: 1; /* Chaque panneau prend la moitié de l'espace sur grand écran */
+    min-width: 300px; /* Assure la lisibilité sur un petit panneau */
+}
+
+h2 {
+    color: var(--accent-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 300; /* Alléger le titre */
+}
+
+/* --- Historique --- */
+
+.temperature-list {
+    list-style: none;
+    padding: 0;
+}
+
+.temperature-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 1.1em;
+}
+
+.temperature-list li:last-child {
+    border-bottom: none;
+}
+
+.temp-value {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+/* --- Sélecteur de Température (Roulette) --- */
+
+.temperature-selector-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.selector {
+    text-align: center;
+    width: 100px; 
+    height: var(--selector-height);
+    overflow: hidden; /* Cacher les valeurs au-dessus et en-dessous */
+    position: relative;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.label {
+    display: block;
+    font-size: 0.8em;
+    color: #999;
+    margin-bottom: 5px;
+    position: absolute;
+    top: -25px; 
+    left: 0;
+    right: 0;
+}
+
+.scroll-area {
+    /* Transition pour l'effet de glissement fluide (géré par JS) */
+    transition: transform 0.2s ease-out;
+    height: 100%;
+}
+
+.value {
+    height: var(--selector-height);
+    line-height: var(--selector-height); 
+    font-size: 2.5em;
+    font-weight: 300;
+    color: #ccc; /* Valeurs non sélectionnées */
+    /* Empêche la sélection de texte lors du glissement */
+    user-select: none;
+}
+
+.current-value {
+    color: var(--text-color); /* Valeur sélectionnée */
+    font-weight: bold;
+}
+
+.separator {
+    font-size: 2.5em;
+    margin: 0 10px;
+    font-weight: 300;
+    line-height: var(--selector-height);
+}
+
+/* --- Bouton d'Enregistrement --- */
+
+#save-button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#save-button:hover {
+    background-color: #0056b3;
+}
