@@ -3,36 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Thermomètre Corporel Épuré</title>
+    <title>Mon Thermomètre Corporel</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container" id="main-app-content"> 
+    <div class="app-container" id="main-app-content">
+        <!-- Toggle Mode Sombre -->
+        <button id="theme-toggle" class="theme-toggle" title="Changer de thème">
+            <i class="fas fa-moon"></i>
+        </button>
+        
         <section class="history-panel">
-            <h2>Historique</h2>
-            <ul id="temperature-list" class="temperature-list">
-                </ul>
+            <h2><i class="fas fa-history"></i> Historique</h2>
+            <ul id="temperature-list" class="temperature-list"></ul>
+            <button id="clear-history" class="clear-btn" title="Vider l'historique">
+                <i class="fas fa-trash"></i> Vider Tout
+            </button>
         </section>
 
         <section class="input-panel">
-            <h2>Nouvelle Température</h2>
+            <h2><i class="fas fa-thermometer-half"></i> Nouvelle Température</h2>
             
             <div class="temperature-selector-container">
                 <div class="selector degrees" id="degrees-selector">
                     <span class="label">Degrés (°C)</span>
-                    <div class="scroll-area" id="degrees-scroll">
-                        <div class="value current-value" data-value="36">36</div>
-                    </div>
+                    <div class="scroll-area" id="degrees-scroll"></div>
                 </div>
 
-                <div class="separator">.</div>
+                <div class="separator">.<i class="fas fa-circle-dot"></i></div>
 
-                <div class="selector centièmes" id="centiemes-selector">
+                <div class="selector centiemes" id="centiemes-selector">
                     <span class="label">Centièmes</span>
-                    <div class="scroll-area" id="centiemes-scroll">
-                        <div class="value current-value" data-value="00">00</div>
-                    </div>
+                    <div class="scroll-area" id="centiemes-scroll"></div>
                 </div>
+            </div>
+
+            <div class="current-temp-display">
+                <span id="current-display">36.00°C</span>
             </div>
 
             <button id="save-button">Enregistrer la Température</button>

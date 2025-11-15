@@ -1,19 +1,33 @@
-/* style.css */
+/* style.css - Version Épurée & Moderne */
+
 :root {
-    /* Variables pour un style facile à maintenir */
-    --main-bg: #f4f4f4;          /* Arrière-plan général très clair */
-    --panel-bg: #ffffff;         /* Fond des cartes/sections */
-    --accent-color: #007bff;     /* Bleu (pour les titres et boutons) */
-    --text-color: #333;          /* Couleur principale du texte */
-    --border-color: #ddd;        /* Couleur des bordures et séparateurs */
-    --selector-height: 80px;     /* Hauteur de l'élément sélectionné dans la roulette */
+    /* Thème Clair (Défaut) */
+    --main-bg: #f8fafc;          /* Gris très clair, apaisant */
+    --panel-bg: #ffffff;         /* Blanc pur pour panels */
+    --accent-color: #3b82f6;     /* Bleu doux (temp cool) */
+    --success-color: #10b981;    /* Vert pour enregistrement */
+    --text-color: #1e293b;       /* Gris foncé pour texte */
+    --text-muted: #64748b;       /* Gris moyen */
+    --border-color: #e2e8f0;     /* Bordures subtiles */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Ombre légère */
+    --selector-height: 80px;
 }
 
-/* --- Base et Conteneur --- */
+/* Thème Sombre */
+[data-theme="dark"] {
+    --main-bg: #0f172a;
+    --panel-bg: #1e293b;
+    --accent-color: #60a5fa;
+    --success-color: #34d399;
+    --text-color: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
 
 body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    background-color: var(--main-bg);
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(to bottom, var(--main-bg), #e2e8f0); /* Subtil gradient */
     color: var(--text-color);
     margin: 0;
     padding: 20px;
@@ -21,50 +35,86 @@ body {
     justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
+    transition: background 0.3s ease;
 }
 
 .app-container {
     display: flex;
-    gap: 40px; /* Espace entre l'historique et la saisie */
-    max-width: 900px;
+    gap: 30px;
+    max-width: 800px;
     width: 100%;
-    /* Flex-wrap pour une adaptation basique sur petit écran */
-    flex-wrap: wrap; 
+    flex-wrap: wrap;
+    position: relative;
 }
 
-/* --- Style des Panneaux (Historique et Saisie) --- */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow);
+}
 
 section {
-    background-color: var(--panel-bg);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Légère ombre pour effet de carte */
-    flex: 1; /* Chaque panneau prend la moitié de l'espace sur grand écran */
-    min-width: 300px; /* Assure la lisibilité sur un petit panneau */
+    background: var(--panel-bg);
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    flex: 1;
+    min-width: 280px;
+    transition: all 0.3s ease;
 }
 
 h2 {
     color: var(--accent-color);
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 10px;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-weight: 300; /* Alléger le titre */
+    padding-bottom: 12px;
+    margin: 0 0 20px 0;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.4em;
 }
 
-/* --- Historique --- */
-
+/* Historique */
 .temperature-list {
     list-style: none;
     padding: 0;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .temperature-list li {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px dashed var(--border-color);
-    font-size: 1.1em;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1em;
+    transition: background 0.2s;
+    position: relative;
+}
+
+.temperature-list li:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-radius: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .temperature-list li:last-child {
@@ -72,82 +122,185 @@ h2 {
 }
 
 .temp-value {
-    font-weight: bold;
+    font-weight: 500;
     color: var(--accent-color);
 }
 
-/* --- Sélecteur de Température (Roulette) --- */
+.temp-actions {
+    display: flex;
+    gap: 8px;
+}
 
+.temp-actions button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.temp-actions button:hover {
+    color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.clear-btn {
+    width: 100%;
+    padding: 10px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 15px;
+    transition: opacity 0.2s;
+}
+
+.clear-btn:hover {
+    opacity: 0.9;
+}
+
+/* Sélecteur */
 .temperature-selector-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
+    gap: 10px;
 }
 
 .selector {
     text-align: center;
-    width: 100px; 
+    width: 90px;
     height: var(--selector-height);
-    overflow: hidden; /* Cacher les valeurs au-dessus et en-dessous */
+    overflow: hidden;
     position: relative;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--panel-bg);
 }
 
 .label {
     display: block;
-    font-size: 0.8em;
-    color: #999;
+    font-size: 0.75em;
+    color: var(--text-muted);
     margin-bottom: 5px;
     position: absolute;
-    top: -25px; 
+    top: -25px;
     left: 0;
     right: 0;
+    font-weight: 400;
 }
 
 .scroll-area {
-    /* Transition pour l'effet de glissement fluide (géré par JS) */
-    transition: transform 0.2s ease-out;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animation plus fluide */
     height: 100%;
 }
 
 .value {
     height: var(--selector-height);
-    line-height: var(--selector-height); 
-    font-size: 2.5em;
+    line-height: var(--selector-height);
+    font-size: 2.2em;
     font-weight: 300;
-    color: #ccc; /* Valeurs non sélectionnées */
-    /* Empêche la sélection de texte lors du glissement */
+    color: var(--text-muted);
     user-select: none;
 }
 
 .current-value {
-    color: var(--text-color); /* Valeur sélectionnée */
-    font-weight: bold;
+    color: var(--accent-color);
+    font-weight: 500;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.3); /* Glow subtil */
 }
 
 .separator {
-    font-size: 2.5em;
-    margin: 0 10px;
+    font-size: 2.2em;
+    margin: 0 5px;
     font-weight: 300;
     line-height: var(--selector-height);
+    color: var(--accent-color);
+    position: relative;
 }
 
-/* --- Bouton d'Enregistrement --- */
+.separator i {
+    font-size: 0.8em;
+    vertical-align: middle;
+}
 
+/* Affichage Courant */
+.current-temp-display {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    color: var(--success-color);
+    font-weight: 400;
+}
+
+/* Bouton Save */
 #save-button {
     width: 100%;
     padding: 15px;
-    background-color: var(--accent-color);
+    background: linear-gradient(135deg, var(--accent-color), #2563eb);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 1.1em;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+#save-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+#save-button:hover::before {
+    left: 100%;
 }
 
 #save-button:hover {
-    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.3);
+}
+
+#save-button.saving {
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    animation: pulse 1.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    body {
+        padding: 10px;
+    }
+    
+    .selector {
+        width: 80px;
+    }
+    
+    .value {
+        font-size: 1.8em;
+    }
 }
