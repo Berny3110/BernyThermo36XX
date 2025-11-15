@@ -98,6 +98,7 @@ h2 {
     max-height: 300px; /* Réduit pour graphe */
     overflow-y: auto;
     margin-bottom: 20px;
+    scroll-behavior: smooth; /* Fluide mobile */
 }
 
 .temperature-list li {
@@ -463,7 +464,7 @@ h2 {
     background: #cbd5e1;
 }
 
-/* Responsive */
+/* Responsive (input top, history bottom) */
 @media (max-width: 768px) {
     .app-container {
         flex-direction: column;
@@ -472,6 +473,14 @@ h2 {
     
     body {
         padding: 10px;
+    }
+    
+    .input-panel {
+        order: 1; /* Haut */
+    }
+    
+    .history-panel {
+        order: 2; /* Bas */
     }
     
     .selector {

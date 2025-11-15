@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Thermomètre Corporel</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -16,22 +19,7 @@
             <i class="fas fa-moon"></i>
         </button>
         
-        <section class="history-panel">
-            <h2><i class="fas fa-history"></i> Historique</h2>
-            <ul id="temperature-list" class="temperature-list"></ul>
-            
-            <canvas id="monthly-chart" width="400" height="200"></canvas>
-            <div id="chart-title" class="chart-title">Évolution Mensuelle</div>
-            
-            <button id="add-manual-btn" class="add-btn" title="Ajouter un événement oublié">
-                <i class="fas fa-plus"></i> Ajouter Manuel
-            </button>
-            
-            <button id="clear-history" class="clear-btn" title="Vider l'historique">
-                <i class="fas fa-trash"></i> Vider Tout
-            </button>
-        </section>
-
+        <!-- INPUT EN HAUT SUR MOBILE -->
         <section class="input-panel">
             <h2><i class="fas fa-thermometer-half"></i> Nouvelle Température</h2>
             
@@ -60,6 +48,23 @@
             </div>
 
             <button id="save-button">Enregistrer la Température</button>
+        </section>
+
+        <!-- HISTORY EN BAS SUR MOBILE -->
+        <section class="history-panel">
+            <h2><i class="fas fa-history"></i> Historique</h2>
+            <ul id="temperature-list" class="temperature-list"></ul>
+            
+            <canvas id="monthly-chart" width="400" height="200"></canvas>
+            <div id="chart-title" class="chart-title">Évolution Mensuelle</div>
+            
+            <button id="add-manual-btn" class="add-btn" title="Ajouter un événement oublié">
+                <i class="fas fa-plus"></i> Ajouter Manuel
+            </button>
+            
+            <button id="clear-history" class="clear-btn" title="Vider l'historique">
+                <i class="fas fa-trash"></i> Vider Tout
+            </button>
         </section>
     </div>
 

@@ -1,4 +1,4 @@
-// script.js (Version Journal de Bord : Ajout Manuel + Tri Chrono)
+// script.js (Version Complète : Temps Réel + Journal Bord + Mobile Fix)
 
 // --- LOGIQUE PRINCIPALE ---
 
@@ -82,7 +82,7 @@ function initializeApp() {
 
     let chart = null;
 
-    // THÈME SOMBRÉ (inchangé)
+    // THÈME SOMBRÉ
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     const toggleIcon = themeToggle.querySelector('i');
@@ -98,7 +98,7 @@ function initializeApp() {
         if (chart) updateGraph();
     });
 
-    // RENDU ROULETTE (général, pour main et add)
+    // RENDU ROULETTE
     function renderSelector(selectorConfig) {
         const { element, min, max, step, format, buffer, currentValue } = selectorConfig;
         const totalValues = (max - min) / step + 1;
@@ -140,7 +140,7 @@ function initializeApp() {
         }
     }
 
-    // INIT SWIPE (général)
+    // INIT SWIPE
     function initSwipe(selectorConfig) {
         const { element, min, max, step, buffer } = selectorConfig;
         let startY = 0;
@@ -165,8 +165,8 @@ function initializeApp() {
             const offset = newIndex * SELECTOR_HEIGHT;
             element.style.transform = `translateY(-${offset}px)`;
 
-            updateCurrentDisplay(); // Pour main
-            updateAddCurrentDisplay(); // Pour add modal
+            updateCurrentDisplay();
+            updateAddCurrentDisplay(); // Si modal ouverte
         }
 
         updateDisplay(currentIndex);
@@ -235,14 +235,14 @@ function initializeApp() {
         addCurrentDisplay.textContent = `${finalTemp.toFixed(2)}°C`;
     }
 
-    // TRI CHRONO HISTORIQUE (nouveau : sort asc par timestamp)
+    // TRI CHRONO HISTORIQUE (asc : oldest first)
     function sortTemperatures() {
         temperatures.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     }
 
-    // RENDU HISTORIQUE (avec group jour + séparateurs)
+    // RENDU HISTORIQUE (avec group jour)
     function renderHistory() {
-        sortTemperatures(); // Tri chrono
+        sortTemperatures();
         temperatureList.innerHTML = '';
         
         if (temperatures.length === 0) {
@@ -255,9 +255,8 @@ function initializeApp() {
         let currentDay = null;
         temperatures.forEach((temp, index) => {
             const date = new Date(temp.timestamp);
-            const dayKey = date.toLocaleDateString('fr-FR'); // Ex. "15/11/2025"
+            const dayKey = date.toLocaleDateString('fr-FR');
 
-            // Séparateur jour
             if (dayKey !== currentDay) {
                 const sep = document.createElement('li');
                 sep.classList.add('day-separator');
@@ -285,7 +284,7 @@ function initializeApp() {
         updateGraph();
     }
 
-    // GRAPHE MENSUEL (adapté tri)
+    // GRAPHE MENSUEL
     function updateGraph() {
         if (temperatures.length === 0) return;
 
@@ -348,7 +347,7 @@ function initializeApp() {
         });
     }
 
-    // FONCTIONS MODAL ÉDITION (avec fix Gemini : auto-save après OK)
+    // FONCTIONS MODAL ÉDITION (no auto-save, temp editable après)
     function showDateModal(initialDate) {
         originalTimestamp = initialDate;
         editingTimestamp = initialDate;
@@ -366,43 +365,29 @@ function initializeApp() {
         dateModal.style.display = 'none';
     }
 
-    // --- FIX GEMINI INTÉGRÉ ---
     modalOk.addEventListener('click', () => {
-        modalOk.classList.add('validating'); // Spinner
+        modalOk.classList.add('validating');
         const newDateStr = dateInput.value;
-       
-        // Le setTimeout simule un délai et garantit que le spinner est visible
         setTimeout(() => {
             if (newDateStr && newDateStr !== '') {
-                // NOTE: L'ajout de ':00' est nécessaire car le type 'datetime-local' ne fournit pas les secondes.
                 const newDate = new Date(newDateStr + ':00');
-               
                 if (!isNaN(newDate.getTime())) {
-                    // 1. Met à jour le timestamp global utilisé par le saveButton
                     editingTimestamp = newDate.toISOString();
                 } else {
-                    editingTimestamp = originalTimestamp; // Fallback sûr
+                    editingTimestamp = originalTimestamp;
                 }
             } else {
                 editingTimestamp = originalTimestamp;
             }
-           
             modalOk.classList.remove('validating');
             hideDateModal();
-           
-            // 2. DÉCLENCHE LA LOGIQUE DE MODIFICATION/SAUVEGARDE
-            // Si nous sommes en mode édition (editingIndex >= 0), nous appelons le clic du bouton d'enregistrement
-            // qui gère la mise à jour des 'temperatures' et le localStorage.
-            if (editingIndex >= 0) {
-                saveButton.click();
-            }
+            // Pas d'auto-save : User édite temp maintenant
         }, 500);
     });
 
     modalCancel.addEventListener('click', () => {
         editingTimestamp = originalTimestamp;
         hideDateModal();
-        // Reset édition
         editingIndex = -1;
         saveButton.textContent = "Enregistrer la Température";
         saveButton.classList.remove('saving');
@@ -427,9 +412,8 @@ function initializeApp() {
         if (e.target === dateModal) modalCancel.click();
     });
 
-    // FONCTIONS MODAL AJOUT MANUEL (similaire, mais new entry)
+    // FONCTIONS MODAL AJOUT MANUEL
     function showAddManualModal() {
-        // Reset roulettes add à default
         addConfig.degrees.currentValue = addConfig.degrees.defaultValue;
         addConfig.dixiemes.currentValue = addConfig.dixiemes.defaultValue;
         addConfig.unites.currentValue = addConfig.unites.defaultValue;
@@ -441,7 +425,6 @@ function initializeApp() {
         initSwipe(addConfig.unites);
         updateAddCurrentDisplay();
 
-        // Date à now
         const now = new Date();
         const minDate = new Date(now.getFullYear() - 1, 0, 1).toISOString().slice(0, 16);
         const maxDate = new Date(now.getFullYear() + 1, 11, 31).toISOString().slice(0, 16);
@@ -478,13 +461,12 @@ function initializeApp() {
                 timestamp: manualTimestamp
             };
 
-            temperatures.push(newEntry); // Ajoute à la fin (tri après)
+            temperatures.push(newEntry);
             localStorage.setItem('temperatures', JSON.stringify(temperatures));
             renderHistory();
             hideAddManualModal();
             addManualOk.classList.remove('validating');
 
-            // Feedback
             addManualBtn.textContent = `Ajouté : ${finalTemp.toFixed(2)}°C`;
             setTimeout(() => {
                 addManualBtn.innerHTML = '<i class="fas fa-plus"></i> Ajouter Manuel';
@@ -505,8 +487,6 @@ function initializeApp() {
         if (e.target === addManualModal) addManualCancel.click();
     });
 
-    // Écouteurs swipe add (dans updateDisplay déjà géré)
-
     // ACTIONS HISTORIQUE
     window.deleteTemp = function(index) {
         if (confirm('Supprimer cette mesure ?')) {
@@ -522,7 +502,7 @@ function initializeApp() {
         originalTimestamp = temp.timestamp;
         editingTimestamp = temp.timestamp;
 
-        // Set roulettes (focus temp)
+        // Set roulettes pour éditer temp (priorité)
         config.degrees.currentValue = Math.floor(temp.value);
         const decimal = (temp.value % 1) * 100;
         config.dixiemes.currentValue = Math.floor(decimal / 10);
@@ -536,7 +516,7 @@ function initializeApp() {
         initSwipe(config.unites);
         updateCurrentDisplay();
 
-        // Ouvre modal date (optionnel, mais garde pour cohérence)
+        // Modal date (optionnelle, après temp)
         showDateModal(editingTimestamp);
 
         saveButton.textContent = 'Modifier & Enregistrer';
@@ -554,7 +534,7 @@ function initializeApp() {
     clearButton.addEventListener('click', window.clearAllTemps);
     addManualBtn.addEventListener('click', showAddManualModal);
 
-    // ENREGISTREMENT (garde fix Gemini ; fallback safe)
+    // ENREGISTREMENT
     saveButton.addEventListener('click', () => {
         if (editingIndex >= 0) {
             if (!editingTimestamp) {
@@ -579,7 +559,7 @@ function initializeApp() {
             originalTimestamp = null;
             saveButton.textContent = `Modifié : ${finalTemp.toFixed(2)}°C`;
         } else {
-            temperatures.push(newEntry); // Push pour tri après
+            temperatures.push(newEntry);
             saveButton.textContent = `Enregistré : ${finalTemp.toFixed(2)}°C`;
         }
         
