@@ -3,72 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
-    <style>
-        /* Désactive le zoom automatique d'accessibilité Samsung/anciens Android */
-        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-        /* FORCER la police à 16px pour éviter le zoom automatique des vieux Android/Samsung */
-        body { font-size: 16px !important; }
-    </style>
-    
-    <title>Mon Thermomètre Corporel</title>
-    
+    <style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}body{font-size:16px!important;}</style>
+    <title>Thermo AI</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="manifest.json">
-    
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <h3><i class="fas fa-edit"></i> Éditer l'Événement</h3>
-            <input type="datetime-local" id="edit-date-input" step="1">
-            <div class="temperature-selector-container manual">
-                <div class="selector degrees" id="edit-degrees-selector">
-                    <div class="scroll-area" id="edit-degrees-scroll"></div>
-                </div>
-                <div class="separator decimal-separator">.</div>
-                <div class="selector dixiemes" id="edit-dixiemes-selector">
-                    <div class="scroll-area" id="edit-dixiemes-scroll"></div>
-                </div>
-                <div class="separator degree-c-separator">°C</div>
-                <div class="selector unites" id="edit-unites-selector">
-                    <div class="scroll-area" id="edit-unites-scroll"></div>
-                </div>
-            </div>
-            <div class="current-temp-display manual">
-                <span id="edit-current-display">36.30°C</span>
-            </div>
-            <div class="modal-actions">
-                <button id="edit-ok">Enregistrer Modifications</button>
-                <button id="edit-cancel">Annuler</button>
-            </div>
-        </div>
-    </div>
+    <nav class="app-header">
+        <div class="logo"><i class="fas fa-heart-pulse"></i> Thermo AI</div>
+        <button id="theme-toggle" class="icon-btn"><i class="fas fa-moon"></i></button>
+    </nav>
 
-    <div class="app-container" id="main-app-content">
-        <button id="theme-toggle" class="theme-toggle" title="Changer de thème">
-            <i class="fas fa-moon"></i>
-        </button>
+    <div class="app-container">
         
-        <section class="input-panel">
-            <h2><i class="fas fa-thermometer-half"></i> Nouvelle Température</h2>
+        <section class="card input-card">
+            <div class="card-header">
+                <h2>Nouvelle Mesure</h2>
+                <span class="date-badge" id="today-date">Aujourd'hui</span>
+            </div>
             
-            <div class="temperature-selector-container">
-                <div class="selector degrees" id="degrees-selector">
-                    <div class="scroll-area" id="degrees-scroll"></div>
-                </div>
-                <div class="separator decimal-separator">.</div>
-                <div class="selector dixiemes" id="dixiemes-selector">
-                    <div class="scroll-area" id="dixiemes-scroll"></div>
-                </div>
-                <div class="separator degree-c-separator">°C</div>
-                <div class="selector unites" id="unites-selector">
-                    <div class="scroll-area" id="unites-scroll"></div>
+            <div class="wheel-wrapper">
+                <div class="selection-highlight"></div>
+                
+                <div class="temperature-selector-container">
+                    <div class="selector degrees" id="degrees-selector"><div class="scroll-area" id="degrees-scroll"></div></div>
+                    <div class="separator decimal-separator">.</div>
+                    <div class="selector dixiemes" id="dixiemes-selector"><div class="scroll-area" id="dixiemes-scroll"></div></div>
+                    <div class="separator degree-c-separator">°C</div>
+                    <div class="selector unites" id="unites-selector"><div class="scroll-area" id="unites-scroll"></div></div>
                 </div>
             </div>
 
@@ -76,81 +43,95 @@
                 <span id="current-display">36.30°C</span>
             </div>
 
-            <button id="save-button">Enregistrer la Température</button>
+            <button id="save-button" class="primary-btn">
+                <i class="fas fa-check"></i> Enregistrer
+            </button>
             
-            <div class="cycle-controls">
-                <button id="start-cycle-btn" class="add-btn">
-                    Lancer le Cycle (Jour 1)
+            <div class="cycle-panel">
+                <button id="start-cycle-btn" class="secondary-btn">
+                    <i class="fas fa-play"></i> Démarrer un Cycle
                 </button>
-                <button id="cycle-end-btn" class="clear-btn" style="display:none;">
-                    Fin de Cycle → Nouveau Cycle
-                </button>
-                <div id="cycle-info" class="cycle-info" style="margin-top:12px; font-size:1.1em; text-align:center; color:var(--accent-color); font-weight:500;">
-                    Aucun cycle en cours
+                
+                <div id="cycle-status-container" class="hidden">
+                    <div id="cycle-info" class="cycle-pill" title="Cliquer pour modifier la date de début">
+                        </div>
+                    <button id="cycle-end-btn" class="text-btn">Terminer</button>
                 </div>
             </div>
         </section>
 
-        <section class="history-panel">
-            <h2><i class="fas fa-history"></i> Historique</h2>
-            <ul id="temperature-list" class="temperature-list"></ul>
-            
-            <canvas id="monthly-chart" width="400" height="200"></canvas>
-            <div id="chart-title" class="chart-title">Évolution Mensuelle</div>
+        <section class="card history-card">
+            <div class="card-header">
+                <h2>Analyse & Suivi</h2>
+            </div>
 
-            <div id="ai-analysis-container" class="ai-analysis hidden">
-                <div class="ai-header">
-                    <i class="fas fa-brain"></i> Analyse du Cycle
-                </div>
-                <div id="ai-content" class="ai-content">
-                    Calcul en cours...
+            <div class="chart-container">
+                <canvas id="monthly-chart"></canvas>
+            </div>
+
+            <div id="ai-analysis-container" class="ai-box hidden">
+                <div class="ai-badge"><i class="fas fa-sparkles"></i> Intelligence</div>
+                <div id="ai-content" class="ai-text">Analyse en cours...</div>
+            </div>
+
+            <div class="history-header">
+                <h3>Historique</h3>
+                <div class="history-actions">
+                    <button id="add-manual-btn" class="icon-btn-small"><i class="fas fa-plus"></i></button>
+                    <button id="clear-history" class="icon-btn-small danger"><i class="fas fa-trash-alt"></i></button>
                 </div>
             </div>
             
-            <button id="add-manual-btn" class="add-btn" title="Ajouter un événement oublié">
-                <i class="fas fa-plus"></i> Ajouter Manuel
-            </button>
-            
-            <button id="clear-history" class="clear-btn" title="Vider l'historique">
-                <i class="fas fa-trash"></i> Vider Tout
-            </button>
+            <ul id="temperature-list" class="list-animated"></ul>
         </section>
     </div>
 
-    <div id="date-modal" class="modal">
+    <div id="edit-modal" class="modal">
         <div class="modal-content">
-            <h3><i class="fas fa-calendar-alt"></i> Modifier la Date/Heure</h3>
-            <input type="datetime-local" id="date-input" step="1">
+            <h3>Modifier Mesure</h3>
+            <input type="datetime-local" id="edit-date-input">
+            <div class="temperature-selector-container manual-selector">
+                <div class="selector degrees" id="edit-degrees-selector"><div class="scroll-area" id="edit-degrees-scroll"></div></div>
+                <div class="separator">.</div>
+                <div class="selector dixiemes" id="edit-dixiemes-selector"><div class="scroll-area" id="edit-dixiemes-scroll"></div></div>
+                <div class="separator">°C</div>
+                <div class="selector unites" id="edit-unites-selector"><div class="scroll-area" id="edit-unites-scroll"></div></div>
+            </div>
+            <div class="current-temp-display small-display"><span id="edit-current-display">--</span></div>
             <div class="modal-actions">
-                <button id="modal-ok">OK</button>
-                <button id="modal-cancel">Annuler</button>
+                <button id="edit-cancel" class="secondary-btn">Annuler</button>
+                <button id="edit-ok" class="primary-btn">Valider</button>
             </div>
         </div>
     </div>
 
     <div id="add-manual-modal" class="modal">
         <div class="modal-content">
-            <h3><i class="fas fa-plus-circle"></i> Ajouter Événement Oublié</h3>
-            <input type="datetime-local" id="add-date-input" step="1">
-            <div class="temperature-selector-container manual">
-                <div class="selector degrees" id="add-degrees-selector">
-                    <div class="scroll-area" id="add-degrees-scroll"></div>
-                </div>
-                <div class="separator decimal-separator">.</div>
-                <div class="selector dixiemes" id="add-dixiemes-selector">
-                    <div class="scroll-area" id="add-dixiemes-scroll"></div>
-                </div>
-                <div class="separator degree-c-separator">°C</div>
-                <div class="selector unites" id="add-unites-selector">
-                    <div class="scroll-area" id="add-unites-scroll"></div>
-                </div>
+            <h3>Ajout Manuel</h3>
+            <input type="datetime-local" id="add-date-input">
+            <div class="temperature-selector-container manual-selector">
+                <div class="selector degrees" id="add-degrees-selector"><div class="scroll-area" id="add-degrees-scroll"></div></div>
+                <div class="separator">.</div>
+                <div class="selector dixiemes" id="add-dixiemes-selector"><div class="scroll-area" id="add-dixiemes-scroll"></div></div>
+                <div class="separator">°C</div>
+                <div class="selector unites" id="add-unites-selector"><div class="scroll-area" id="add-unites-scroll"></div></div>
             </div>
-            <div class="current-temp-display manual">
-                <span id="add-current-display">36.30°C</span>
-            </div>
+            <div class="current-temp-display small-display"><span id="add-current-display">--</span></div>
             <div class="modal-actions">
-                <button id="add-manual-ok">Ajouter</button>
-                <button id="add-manual-cancel">Annuler</button>
+                <button id="add-manual-cancel" class="secondary-btn">Annuler</button>
+                <button id="add-manual-ok" class="primary-btn">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cycle-date-modal" class="modal">
+        <div class="modal-content small-modal">
+            <h3>Début du Cycle</h3>
+            <p class="modal-desc">Modifier la date du Jour 1</p>
+            <input type="date" id="cycle-start-input">
+            <div class="modal-actions">
+                <button id="cycle-date-cancel" class="secondary-btn">Annuler</button>
+                <button id="cycle-date-ok" class="primary-btn">Mettre à jour</button>
             </div>
         </div>
     </div>
