@@ -554,3 +554,23 @@ h2 {
         -webkit-overflow-scrolling: touch;
     }
 }
+
+.cycle-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#cycle-info {
+    padding: 10px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    .cycle-controls {
+        margin-top: 15px;
+    }
+}
