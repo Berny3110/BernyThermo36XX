@@ -1,4 +1,4 @@
-/* style.css - Version Finale : App Thermomètre Corporel (Multi-Visibles Wheel + Mobile-Optimisé) */
+/* style.css - Version Finale : App Thermomètre Corporel (Optimisation Mobile 100% Largeur V3) */
 
 :root {
     /* Thème Clair (Défaut) */
@@ -206,58 +206,43 @@ h2 {
     font-weight: 400;
 }
 
-/* Sélecteur Roue (Multi-Visibles : 3 Lignes + Anti-Scroll) */
+/* Sélecteur Roue (Optimisation 100% Largeur) */
 .temperature-selector-container {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between; /* Étire les éléments pour remplir l'espace */
     margin-bottom: 20px;
-    gap: 0; /* Supprimer le gap global, on utilise la marge du .separator */
+    padding: 0 10px; /* Espace autour des roues */
+    width: 100%;
 }
 
 .manual .temperature-selector-container {
-    gap: 0;
+    justify-content: space-between;
     margin-bottom: 10px;
+    padding: 0 10px;
+}
+
+/* ❌ Suppression/Masquage des Labels */
+.label, .unit-label, .separator i {
+    display: none !important;
 }
 
 .selector {
     text-align: center;
-    width: 100px; /* Taille par défaut */
+    width: 30%; /* Largeur RELATIVE pour s'adapter */
+    min-width: 80px; /* Minimum pour ne pas écraser les chiffres */
+    max-width: 110px;
     height: var(--wheel-height);
     overflow: hidden;
-    position: relative; /* ESSENTIEL pour positionner le label */
+    position: relative; 
     border: 2px solid var(--border-color);
     border-radius: 12px;
     background: var(--panel-bg);
     display: flex;
     flex-direction: column;
     align-items: center;
-    touch-action: none; /* Bloque scroll page */
-}
-
-.dixiemes, .unites {
-    margin-left: 0;
-}
-
-.unit-label {
-    position: absolute;
-    bottom: -20px;
-    font-size: 0.8em;
-    color: var(--accent-color);
-    font-weight: 500;
-    line-height: 1;
-}
-
-.label {
-    display: block;
-    font-size: 0.7em;
-    color: var(--text-muted);
-    margin-bottom: 5px;
-    position: absolute;
-    top: -25px;
-    left: 0;
-    right: 0;
-    font-weight: 400;
+    touch-action: none;
+    flex-shrink: 1; /* Permettre la réduction si nécessaire */
 }
 
 .scroll-area {
@@ -299,7 +284,7 @@ h2 {
 
 .separator {
     font-size: 1.8em;
-    margin: 0 3px; /* Marge pour créer l'espace autour du point/virgule */
+    margin: 0; 
     font-weight: 300;
     line-height: var(--item-height);
     color: var(--accent-color);
@@ -307,11 +292,22 @@ h2 {
     height: var(--item-height);
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 15px; /* Largeur fixe minimale pour les séparateurs */
+    flex-shrink: 0; 
 }
 
-.separator i {
-    font-size: 0.6em;
-    vertical-align: middle;
+/* Styles spécifiques aux séparateurs */
+.decimal-separator {
+    font-size: 2em; /* Rendre le point plus visible */
+    width: 10px;
+    font-weight: 600;
+}
+
+.degree-c-separator {
+    font-size: 1.2em; /* Taille plus petite pour le °C */
+    font-weight: 500;
+    width: 25px; /* Plus large pour accueillir le °C */
 }
 
 /* Affichage Courant */
@@ -328,7 +324,7 @@ h2 {
     margin-bottom: 10px;
 }
 
-/* Bouton Save */
+/* Bouton Save (Inchangé) */
 #save-button {
     width: 100%;
     padding: 15px;
@@ -369,7 +365,7 @@ h2 {
     50% { transform: scale(1.02); }
 }
 
-/* Modals */
+/* Modals (Inchangé) */
 .modal {
     display: none;
     position: fixed;
@@ -500,30 +496,42 @@ h2 {
 
     /* ⚙️ Optimisation de la roue pour 3 sélecteurs (Unités, Décimales, Centièmes) */
     :root {
-        --item-height: 65px; /* Légèrement réduit pour gagner de la hauteur */
-        --wheel-height: 195px; /* 3 x 65px */
+        --item-height: 70px; /* Augmenté pour mieux remplir l'espace */
+        --wheel-height: 210px; /* 3 x 70px */
     }
     
+    .temperature-selector-container {
+        padding: 0 5px; /* Réduire le padding mobile pour gagner de la place */
+    }
+
     .selector {
-        width: 80px; /* RÉDUIT pour faire tenir 3 roues + 2 séparateurs */
+        width: 30%; /* Conserver la largeur relative */
+        min-width: 70px; /* Minimum pour ne pas écraser les chiffres */
         height: var(--wheel-height);
-        touch-action: none;
-        position: relative; /* Confirmation du positionnement relatif */
     }
     
     .value {
-        font-size: 2em; /* Réduit à 2em pour gagner de la place (était 2.5em) */
+        font-size: 2.2em; 
         line-height: var(--item-height);
     }
     
     .current-value {
-        transform: scale(1.15); /* Réduit un peu l'effet d'échelle */
+        transform: scale(1.15); 
     }
 
-    /* 🎯 Correction du Séparateur en Mobile */
+    /* Ajustement du Séparateur en Mobile */
     .separator {
-        font-size: 1.8em;
-        margin: 0 2px; /* Marge minimale pour l'espace */
+        width: 15px;
+    }
+
+    .decimal-separator {
+        width: 10px;
+        font-size: 2em;
+    }
+
+    .degree-c-separator {
+        width: 20px; 
+        font-size: 1.1em;
     }
 
     #monthly-chart {
@@ -542,14 +550,6 @@ h2 {
     .modal-actions {
         flex-direction: column;
         gap: 8px;
-    }
-
-    .temperature-selector-container {
-        gap: 0; /* Pas de gap sur le conteneur, l'espace est géré par les marges du séparateur */
-    }
-
-    .manual .temperature-selector-container {
-        gap: 0;
     }
 
     .temperature-list {
