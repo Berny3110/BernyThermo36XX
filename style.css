@@ -577,3 +577,53 @@ h2 {
         margin-top: 15px;
     }
 }
+
+/* === ZONE ANALYSE IA (NOUVEAU) === */
+.ai-analysis {
+    background: linear-gradient(135deg, var(--panel-bg), rgba(59, 130, 246, 0.05));
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    font-size: 0.95em;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.ai-analysis.hidden {
+    display: none;
+}
+
+.ai-header {
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-content {
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* Style pour la phase détectée */
+.phase-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-right: 5px;
+}
+.phase-follicular { background: #e0f2fe; color: #0369a1; } /* Bleu clair */
+.phase-luteal { background: #fdf4ff; color: #a21caf; }     /* Violet/Rose */
+
+[data-theme="dark"] .phase-follicular { background: #0c4a6e; color: #bae6fd; }
+[data-theme="dark"] .phase-luteal { background: #701a75; color: #fbcfe8; }

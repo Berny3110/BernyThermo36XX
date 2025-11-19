@@ -1,4 +1,4 @@
-// script.js - VERSION FINALE COMPLÈTE & FONCTIONNELLE (Cycle + Jour + Zoom fixe + Tout marche)
+// script.js - VERSION FINALE AVEC INTELLIGENCE DE CYCLE (Simulation Gemini)
 
 function initializeApp() {
     // === RÉFÉRENCES DOM ===
@@ -56,6 +56,7 @@ function initializeApp() {
     let temperatures = JSON.parse(localStorage.getItem('temperatures_v2') || '[]');
     let cycleStartDate = localStorage.getItem('cycleStartDate');
     let chart = null;
+    let editingIndex = -1;
 
     // === GESTION DU CYCLE ===
     function updateCycleDisplay() {
@@ -96,6 +97,190 @@ function initializeApp() {
 
     startCycleBtn.addEventListener('click', startNewCycle);
     endCycleBtn.addEventListener('click', endCycle);
+
+    // === INTELLIGENCE DE CYCLE (CERVEAU) ===
+    function analyzeCycleLogic(temps) {
+        if (temps.length < 5) return null; // Pas assez de données pour une vraie analyse
+
+        // Trier par date
+        const sorted = [...temps].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        let shiftIndex = -1;
+        let coverLine = 0;
+
+        // On cherche le décalage thermique (Règle simplifiée : 3 températures > aux 6 précédentes)
+        // Nous adaptons un peu si nous avons moins de 6 jours avant
+        for (let i = 1; i < sorted.length - 2; i++) {
+            // On regarde jusqu'à 6 jours avant
+            const startIndex = Math.max(0, i - 6);
+            const preDays = sorted.slice(startIndex, i).map(t => t.value);
+            const post3 = sorted.slice(i, i + 3).map(t => t.value);
+            
+            if (preDays.length < 3) continue; // Il faut au moins 3 jours avant pour comparer
+
+            const maxPre = Math.max(...preDays);
+            const minPost3 = Math.min(...post3);
+
+            // Si les 3 jours suivants sont tous supérieurs au max des précédents
+            if (minPost3 > maxPre) {
+                shiftIndex = i;
+                coverLine = maxPre + 0.05; // Ligne de couverture estimée
+                break; // On a trouvé le premier décalage
+            }
+        }
+
+        if (shiftIndex !== -1) {
+            const shiftDate = new Date(sorted[shiftIndex].timestamp);
+            const dayOfCycle = getCycleDay(sorted[shiftIndex].timestamp);
+            
+            // Calcul jours phase lutéale (post-ovulation)
+            const lastDate = new Date(sorted[sorted.length - 1].timestamp);
+            // Différence en ms convertie en jours
+            const diffTime = Math.abs(lastDate - shiftDate);
+            const lutealDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+
+            return {
+                detected: true,
+                shiftDate: shiftDate,
+                shiftIndex: shiftIndex, // Index dans le tableau filtré du cycle
+                dayOfCycle: dayOfCycle,
+                lutealDays: lutealDays,
+                coverLine: coverLine
+            };
+        }
+
+        return { detected: false };
+    }
+
+    // === GRAPHE ET ANALYSE ===
+    function updateGraph() {
+        const aiContainer = document.getElementById('ai-analysis-container');
+        const aiContent = document.getElementById('ai-content');
+
+        if (temperatures.length === 0) {
+            chartTitle.textContent = "Aucune donnée";
+            aiContainer.classList.add('hidden');
+            if (chart) chart.destroy();
+            return;
+        }
+
+        // Filtrer sur le cycle actuel
+        const relevantTemps = cycleStartDate 
+            ? temperatures.filter(t => new Date(t.timestamp) >= new Date(cycleStartDate))
+            : temperatures;
+
+        if (relevantTemps.length === 0) {
+             if (chart) chart.destroy();
+             return;
+        }
+
+        relevantTemps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        // --- Lancer l'Analyse ---
+        const analysis = analyzeCycleLogic(relevantTemps);
+        
+        // Mise à jour UI Analyse
+        if (cycleStartDate && analysis) {
+            aiContainer.classList.remove('hidden');
+            if (analysis.detected) {
+                aiContent.innerHTML = `
+                    <span class="phase-tag phase-luteal">Phase Lutéale</span>
+                    Décalage thermique détecté à <strong>J${analysis.dayOfCycle}</strong>.<br>
+                    Vous êtes en plateau haut depuis environ ${analysis.lutealDays} jours.
+                `;
+            } else {
+                aiContent.innerHTML = `
+                    <span class="phase-tag phase-follicular">Phase Folliculaire</span>
+                    Pas de décalage thermique confirmé pour l'instant.
+                `;
+            }
+        } else {
+             aiContainer.classList.add('hidden');
+        }
+
+        // Préparation données Chart
+        const labels = relevantTemps.map((t, i) => {
+            const day = getCycleDay(t.timestamp) || '?';
+            return `J${day}`;
+        });
+        const dataValues = relevantTemps.map(t => t.value);
+
+        chartTitle.textContent = `Cycle en cours — ${relevantTemps.length} mesure${relevantTemps.length > 1 ? 's' : ''}`;
+
+        if (chart) chart.destroy();
+
+        // Plugin Chart.js pour dessiner la ligne verticale
+        const verticalLinePlugin = {
+            id: 'verticalLine',
+            beforeDraw: (chart) => {
+                if (analysis && analysis.detected) {
+                    const ctx = chart.ctx;
+                    const xAxis = chart.scales.x;
+                    const yAxis = chart.scales.y;
+                    
+                    // Trouver la position X de l'index du décalage
+                    // Attention: analysis.shiftIndex correspond à l'index dans relevantTemps
+                    const xPos = xAxis.getPixelForTick(analysis.shiftIndex);
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#a21caf'; // Couleur violette
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]); // Pointillés
+                    ctx.moveTo(xPos, yAxis.top);
+                    ctx.lineTo(xPos, yAxis.bottom);
+                    ctx.stroke();
+                    
+                    // Label "OV?"
+                    ctx.fillStyle = '#a21caf';
+                    ctx.textAlign = 'center';
+                    ctx.font = 'bold 10px Inter';
+                    ctx.fillText('OVULATION ?', xPos, yAxis.top - 5);
+                    ctx.restore();
+                }
+            }
+        };
+
+        chart = new Chart(chartCanvas.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Température (°C)',
+                    data: dataValues,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 800 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { label: ctx => `${ctx.parsed.y.toFixed(2)}°C` }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 35.8,
+                        max: 37.5, 
+                        ticks: { callback: value => value.toFixed(2) + '°C' },
+                        grid: { color: 'rgba(100, 116, 139, 0.2)' }
+                    },
+                    x: { grid: { display: false } }
+                },
+                layout: {
+                    padding: { top: 20 } 
+                }
+            },
+            plugins: [verticalLinePlugin] 
+        });
+    }
 
     // === RENDU HISTORIQUE ===
     function renderHistory() {
@@ -145,60 +330,57 @@ function initializeApp() {
     }
 
     // === SAUVEGARDE PRINCIPALE ===
-		saveButton.addEventListener('click', () => {
-				if (!cycleStartDate) {
-						alert("Lancez d’abord un cycle avec le bouton ci-dessous !");
-						return;
-				}
+    saveButton.addEventListener('click', () => {
+        if (!cycleStartDate) {
+            alert("Lancez d’abord un cycle avec le bouton ci-dessous !");
+            return;
+        }
 
-				const today = new Date().toLocaleDateString('fr-FR');
-				const existingToday = temperatures.find(t => 
-						new Date(t.timestamp).toLocaleDateString('fr-FR') === today
-				);
+        const today = new Date().toLocaleDateString('fr-FR');
+        const existingToday = temperatures.find(t => 
+            new Date(t.timestamp).toLocaleDateString('fr-FR') === today
+        );
 
-				if (existingToday) {
-						const confirmReplace = confirm(
-								`Vous avez déjà pris une température aujourd’hui (${existingToday.value.toFixed(2)}°C).\n\n` +
-								`Voulez-vous vraiment l’écraser avec ${getCurrentTemp().toFixed(2)}°C ?`
-						);
-						if (!confirmReplace) {
-								alert("Enregistrement annulé.");
-								return;
-						}
-						// On écrase l'ancienne
-						const index = temperatures.indexOf(existingToday);
-						temperatures.splice(index, 1);
-				}
+        if (existingToday) {
+            const confirmReplace = confirm(
+                `Vous avez déjà pris une température aujourd’hui (${existingToday.value.toFixed(2)}°C).\n\n` +
+                `Voulez-vous vraiment l’écraser avec ${getCurrentTemp().toFixed(2)}°C ?`
+            );
+            if (!confirmReplace) {
+                alert("Enregistrement annulé.");
+                return;
+            }
+            const index = temperatures.indexOf(existingToday);
+            temperatures.splice(index, 1);
+        }
 
-				const value = getCurrentTemp();
-				const entry = { value, timestamp: new Date().toISOString() };
+        const value = getCurrentTemp();
+        const entry = { value, timestamp: new Date().toISOString() };
 
-				temperatures.push(entry);
-				localStorage.setItem('temperatures_v2', JSON.stringify(temperatures));
-				renderHistory();
+        temperatures.push(entry);
+        localStorage.setItem('temperatures_v2', JSON.stringify(temperatures));
+        renderHistory();
 
-				const day = getCycleDay(entry.timestamp);
-				saveButton.textContent = `Enregistré ! Jour ${day}`;
-				setTimeout(() => {
-						resetMainWheel();
-						saveButton.textContent = "Enregistrer la Température";
-				}, 1800);
-		});
+        const day = getCycleDay(entry.timestamp);
+        saveButton.textContent = `Enregistré ! Jour ${day}`;
+        setTimeout(() => {
+            resetMainWheel();
+            saveButton.textContent = "Enregistrer la Température";
+        }, 1800);
+    });
 
-		// Fonction utilitaire pour récupérer la température actuelle
-		function getCurrentTemp() {
-				return config.degrees.currentValue + config.dixiemes.currentValue/10 + config.unites.currentValue/100;
-		}
+    function getCurrentTemp() {
+        return config.degrees.currentValue + config.dixiemes.currentValue/10 + config.unites.currentValue/100;
+    }
 
-		// Reset des roues (appelée après enregistrement)
-		function resetMainWheel() {
-				Object.values(config).forEach(c => c.currentValue = c.defaultValue);
-				['degrees','dixiemes','unites'].forEach(k => {
-						renderSelector(config[k]);
-						initSwipe(config[k]);
-				});
-				updateCurrentDisplay();
-		}
+    function resetMainWheel() {
+        Object.values(config).forEach(c => c.currentValue = c.defaultValue);
+        ['degrees','dixiemes','unites'].forEach(k => {
+            renderSelector(config[k]);
+            initSwipe(config[k]);
+        });
+        updateCurrentDisplay();
+    }
 
     // === ROUES ===
     function renderSelector(cfg) {
@@ -218,70 +400,65 @@ function initializeApp() {
         }
     }
 
-		function initSwipe(cfg, isModal = false) {
-				const { element, min, max, step, buffer } = cfg;
-				let startY = 0;
-				let currentIndex = cfg.startIndex || buffer + (max - cfg.defaultValue) / step;
-				const total = (max - min) / step + 1;
-				let isDragging = false;
+    function initSwipe(cfg, isModal = false) {
+        const { element, min, max, step, buffer } = cfg;
+        let startY = 0;
+        let currentIndex = cfg.startIndex || buffer + (max - cfg.defaultValue) / step;
+        const total = (max - min) / step + 1;
+        let isDragging = false;
 
-				const update = (newIndex) => {
-						const dataIndex = ((newIndex - buffer) % total + total) % total;
-						cfg.currentValue = max - dataIndex * step;
-						element.style.transform = `translateY(-${(newIndex - 1.5) * 60}px)`;
-						element.querySelectorAll('.value').forEach(el => el.classList.remove('current-value'));
-						const wrapped = buffer + dataIndex;
-						if (element.children[wrapped]) element.children[wrapped].classList.add('current-value');
-						if (!isModal) updateCurrentDisplay();
-						else if (addCurrentDisplay && isModal) updateAddCurrentDisplay();
-						else if (editCurrentDisplay && isModal) updateEditCurrentDisplay();
-				};
-				update(currentIndex);
+        const update = (newIndex) => {
+            const dataIndex = ((newIndex - buffer) % total + total) % total;
+            cfg.currentValue = max - dataIndex * step;
+            element.style.transform = `translateY(-${(newIndex - 1.5) * 60}px)`;
+            element.querySelectorAll('.value').forEach(el => el.classList.remove('current-value'));
+            const wrapped = buffer + dataIndex;
+            if (element.children[wrapped]) element.children[wrapped].classList.add('current-value');
+            if (!isModal) updateCurrentDisplay();
+            else if (addCurrentDisplay && isModal) updateAddCurrentDisplay();
+            else if (editCurrentDisplay && isModal) updateEditCurrentDisplay();
+        };
+        update(currentIndex);
 
-				const startDrag = (e) => {
-						e.preventDefault();
-						isDragging = true;
-						startY = e.touches?.[0].clientY || e.clientY;
-						element.style.transition = 'none';
-				};
+        const startDrag = (e) => {
+            isDragging = true;
+            startY = e.touches?.[0].clientY || e.clientY;
+            element.style.transition = 'none';
+        };
 
-				const drag = (e) => {
-						if (!isDragging) return;
-						e.preventDefault();
-						const y = e.touches?.[0].clientY || e.clientY;
-						const diff = startY - y;
-						const offset = (currentIndex - 1.5) * 60;
-						element.style.transform = `translateY(-${offset + diff}px)`;
-				};
+        const drag = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const y = e.touches?.[0].clientY || e.clientY;
+            const diff = startY - y;
+            const offset = (currentIndex - 1.5) * 60;
+            element.style.transform = `translateY(-${offset + diff}px)`;
+        };
 
-				const endDrag = () => {
-						if (!isDragging) return;
-						isDragging = false;
-						element.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+        const endDrag = (event) => {
+            if (!isDragging) return;
+            isDragging = false;
+            element.style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
 
-						// On calcule le déplacement seulement si on a bougé
-						const finalY = event?.changedTouches?.[0]?.clientY || event?.clientY;
-						if (finalY !== undefined) {
-								const diff = startY - finalY;
-								const steps = Math.round(diff / 60);
-								currentIndex += steps;
-						}
+            const finalY = event?.changedTouches?.[0]?.clientY || event?.clientY;
+            if (finalY !== undefined) {
+                const diff = startY - finalY;
+                const steps = Math.round(diff / 60);
+                currentIndex += steps;
+            }
 
-						currentIndex = ((currentIndex - buffer) % total + total) % total + buffer;
-						update(currentIndex);
-				};
+            currentIndex = ((currentIndex - buffer) % total + total) % total + buffer;
+            update(currentIndex);
+        };
 
-				// Écouteurs uniquement sur l’élément (pas sur document)
-				element.addEventListener('touchstart', startDrag, { passive: false });
-				element.addEventListener('mousedown', startDrag);
-
-				element.addEventListener('touchmove', drag, { passive: false });
-				element.addEventListener('mousemove', drag); // maintenant safe grâce à isDragging
-
-				element.addEventListener('touchend', endDrag);
-				element.addEventListener('mouseup', endDrag);
-				element.addEventListener('mouseleave', endDrag); // important pour desktop
-		}
+        element.addEventListener('touchstart', startDrag, { passive: false });
+        element.addEventListener('mousedown', startDrag);
+        element.addEventListener('touchmove', drag, { passive: false });
+        element.addEventListener('mousemove', drag);
+        element.addEventListener('touchend', endDrag);
+        element.addEventListener('mouseup', endDrag);
+        element.addEventListener('mouseleave', endDrag);
+    }
 
     function updateCurrentDisplay() {
         const val = config.degrees.currentValue + config.dixiemes.currentValue/10 + config.unites.currentValue/100;
@@ -296,81 +473,7 @@ function initializeApp() {
         editCurrentDisplay.textContent = val.toFixed(2) + '°C';
     }
 
-    // === GRAPHE (simple mais propre) ===
-		function updateGraph() {
-				if (temperatures.length === 0) {
-						chartTitle.textContent = "Aucune donnée";
-						if (chart) chart.destroy();
-						return;
-				}
-
-				// On prend toutes les températures du cycle actuel (ou toutes si pas de cycle)
-				const relevantTemps = cycleStartDate 
-						? temperatures.filter(t => new Date(t.timestamp) >= new Date(cycleStartDate))
-						: temperatures;
-
-				if (relevantTemps.length === 0) return;
-
-				relevantTemps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-				const labels = relevantTemps.map((t, i) => {
-						const date = new Date(t.timestamp);
-						const day = getCycleDay(t.timestamp) || '?';
-						return `J${day}`;
-				});
-
-				const data = relevantTemps.map(t => t.value);
-
-				chartTitle.textContent = `Évolution du cycle — ${relevantTemps.length} mesure${relevantTemps.length > 1 ? 's' : ''}`;
-
-				if (chart) chart.destroy();
-
-				chart = new Chart(chartCanvas.getContext('2d'), {
-						type: 'line',
-						data: {
-								labels: labels,
-								datasets: [{
-										label: 'Température (°C)',
-										data: data,
-										borderColor: '#3b82f6',
-										backgroundColor: 'rgba(59, 130, 246, 0.1)',
-										tension: 0.4,
-										pointRadius: 5,
-										pointHoverRadius: 8,
-										fill: true
-								}]
-						},
-						options: {
-								responsive: true,
-								animation: { duration: 800 },
-								plugins: {
-										legend: { display: false },
-										tooltip: {
-												callbacks: {
-														label: ctx => `${ctx.parsed.y.toFixed(2)}°C`
-												}
-										}
-								},
-								scales: {
-										y: {
-												min: 35.8,
-												max: 37.2,
-												ticks: {
-														stepSize: 0.05,
-														callback: value => value.toFixed(2) + '°C'
-												},
-												grid: { color: 'rgba(100, 116, 139, 0.2)' }
-										},
-										x: {
-												grid: { display: false }
-										}
-								}
-						}
-				});
-		}
-
     // === MODALS (Ajout manuel + Édition) ===
-    // (je garde ton code existant, juste adapté au nouveau storage)
     addManualBtn.addEventListener('click', () => {
         addManualModal.style.display = 'flex';
         addDateInput.value = new Date().toISOString().slice(0,16);
