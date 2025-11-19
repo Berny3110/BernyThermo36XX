@@ -2,13 +2,13 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <!-- LA LIGNE MAGIQUE QUI FIXE TOUT -->
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <style>
         /* Désactive le zoom automatique d'accessibilité Samsung/anciens Android */
         html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-        body { font-size: 16px; }
+        /* FORCER la police à 16px pour éviter le zoom automatique des vieux Android/Samsung */
+        body { font-size: 16px !important; }
     </style>
     
     <title>Mon Thermomètre Corporel</title>
