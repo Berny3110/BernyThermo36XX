@@ -1,11 +1,11 @@
 {
-  "name": "Mon Thermomètre Corporel",
-  "short_name": "Thermo",
-  "description": "Journal de bord pour suivre tes températures corporelles",
+  "name": "Jeu de Lettres",
+  "short_name": "Lettres",
+  "description": "Un tirage aléatoire de lettres avec fond rouge ou bleu",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#3b82f6",
+  "background_color": "#000000",
+  "theme_color": "#1976d2",
   "icons": [
     {
       "src": "icon-192.png",
@@ -14,7 +14,7 @@
     },
     {
       "src": "icon-512.png",
-      "sizes": "500x500",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]

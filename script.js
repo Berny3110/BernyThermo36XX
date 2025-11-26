@@ -1,4 +1,4 @@
-// script.js - Version CORRIGÉE & COMPLÈTE
+// script.js - Version FINALE CORRIGÉE (Wrapper et Centrage)
 
 function initializeApp() {
     // === 1. REFERENCES DOM ===
@@ -48,12 +48,13 @@ function initializeApp() {
     // === 2. CONFIGURATION ROUES ===
     const BUFFER = 5; 
     const ITEM_HEIGHT = 60;
+    const NUM_REPETITIONS = 5; // Total de séquences : 2x haut + 1x centre + 2x bas
 
     // Helper pour créer une config de roue
     const createWheelConfig = (idPrefix, defaults) => ({
-        degrees: { element: document.getElementById(`${idPrefix}degrees-scroll`),  min: 34, max: 42, step: 1, defaultValue: defaults.d, currentValue: defaults.d, format: v => v, buffer: BUFFER },
-        dixiemes: { element: document.getElementById(`${idPrefix}dixiemes-scroll`), min: 0, max: 9, step: 1, defaultValue: defaults.dx, currentValue: defaults.dx, format: v => v, buffer: BUFFER },
-        unites:   { element: document.getElementById(`${idPrefix}unites-scroll`),   min: 0, max: 9, step: 1, defaultValue: defaults.u, currentValue: defaults.u, format: v => v, buffer: BUFFER }
+        degrees: { element: document.getElementById(`${idPrefix}degrees-scroll`),  min: 34, max: 42, step: 1, defaultValue: defaults.d, currentValue: defaults.d, format: v => v, buffer: BUFFER, isRepeating: false },
+        dixiemes: { element: document.getElementById(`${idPrefix}dixiemes-scroll`), min: 0, max: 9, step: 1, defaultValue: defaults.dx, currentValue: defaults.dx, format: v => v, buffer: BUFFER, isRepeating: true },
+        unites:   { element: document.getElementById(`${idPrefix}unites-scroll`),   min: 0, max: 9, step: 1, defaultValue: defaults.u, currentValue: defaults.u, format: v => v, buffer: BUFFER, isRepeating: true }
     });
 
     // 3 Configs distinctes : Principale, Ajout Manuel, Édition
@@ -118,35 +119,94 @@ function initializeApp() {
     // === 4. LOGIQUE ROUES (SWIPE) ===
     function getVal(cfg) { return cfg.degrees.currentValue + cfg.dixiemes.currentValue/10 + cfg.unites.currentValue/100; }
 
-    function renderSelector(cfg) {
-        const { element, min, max, step, format, buffer, currentValue } = cfg;
+		function renderSelector(cfg) {
+        const { element, min, max, step, format, buffer, currentValue, isRepeating } = cfg;
         element.innerHTML = '';
-        for (let i = 0; i < buffer; i++) element.innerHTML += '<div class="value dummy"></div>';
-        for (let i = max; i >= min; i -= step) element.innerHTML += `<div class="value">${format(i)}</div>`;
-        for (let i = 0; i < buffer; i++) element.innerHTML += '<div class="value dummy"></div>';
+        
+        // Détermine la taille de la séquence (nombre d'items uniques)
+        const rangeSize = (max - min) / step + 1; 
 
-        const offset = ((max - currentValue)/step + buffer - 1.5) * ITEM_HEIGHT;
+        // Helper pour générer la séquence de nombres (de max à min)
+        const generateSequence = () => {
+            let html = '';
+            for (let i = max; i >= min; i -= step) {
+                html += `<div class="value">${format(i)}</div>`;
+            }
+            return html;
+        };
+        
+        // 1. Ajout du padding supérieur (éléments dummy)
+        for (let i = 0; i < buffer; i++) element.innerHTML += '<div class="value dummy"></div>';
+        
+        let offsetIndexAdjustment = 0;
+
+        if (isRepeating) {
+             // 2. Ajout des deux répétitions avant la séquence principale (Wrapper Scroll-Up)
+             element.innerHTML += generateSequence(); 
+             element.innerHTML += generateSequence(); 
+             offsetIndexAdjustment = 2 * rangeSize; // Décalage de l'index de sélection
+        }
+
+        // 3. Ajout de la séquence principale
+        element.innerHTML += generateSequence();
+        
+        if (isRepeating) {
+             // 4. Ajout des deux répétitions après la séquence principale (Wrapper Scroll-Down)
+             element.innerHTML += generateSequence(); 
+             element.innerHTML += generateSequence(); 
+        }
+
+        // --- CALCUL DE L'OFFSET INITIAL ---
+        
+        // Index du courant dans une seule séquence (0 est max, N est min)
+        const idxInSequence = (max - currentValue)/step; 
+        
+        // Index du courant dans la liste complète générée (y compris les répétitions)
+        cfg.selectionIdx = idxInSequence + offsetIndexAdjustment; // Stockage dans la config pour initSwipe
+
+        // Calcul de l'offset total pour centrer l'élément sélectionné
+        const offset = (cfg.selectionIdx + buffer - 1.5) * ITEM_HEIGHT;
+        
         element.style.transform = `translateY(-${offset}px)`;
         
+        // Timeout pour s'assurer que l'élément est là
         setTimeout(() => {
             const values = element.querySelectorAll('.value:not(.dummy)');
-            values.forEach(v => v.classList.remove('current-value'));
-            const idx = (max - currentValue)/step;
-            if(values[idx]) values[idx].classList.add('current-value');
+            // Application de la classe current-value avec l'index corrigé
+            if(values[cfg.selectionIdx]) values[cfg.selectionIdx].classList.add('current-value');
         }, 50);
     }
-
+		
     function initSwipe(cfg, callbackDisplay) {
-        const { element, min, max, step, buffer } = cfg;
+        const { element, min, max, step, buffer, isRepeating } = cfg;
         let startY = 0, currentY = 0, isDragging = false;
-        let currentIndex = (max - cfg.currentValue) / step;
+        
+        // Utilisation de l'index sauvegardé par renderSelector
+        let currentIndex = cfg.selectionIdx || (max - cfg.currentValue) / step; 
+        
+        const rangeSize = (max - min) / step + 1; // 10 pour 0-9
 
         const updateVisuals = (yOffset, index) => {
             element.style.transform = `translateY(-${yOffset}px)`;
+            
+            // Calcul de l'index dans la séquence 0-9
+            let actualIndex = index;
+            if (isRepeating) {
+                // Pour les sélecteurs 0-9, l'index est toujours dans la séquence 0..9 (modulo)
+                // L'index 0 (max) est à l'index selectionIdx
+                actualIndex = (index - (2 * rangeSize)) % rangeSize;
+                if (actualIndex < 0) actualIndex += rangeSize; // Assurer un résultat positif
+            }
+
+            // Mise à jour de la valeur courante (max - index * step)
+            // On utilise l'index réel (0-9) pour calculer la valeur
+            cfg.currentValue = max - (actualIndex * step);
+            
+            // Mise à jour visuelle (pour la classe current-value)
             const values = element.querySelectorAll('.value:not(.dummy)');
             values.forEach(v => v.classList.remove('current-value'));
             if(values[index]) values[index].classList.add('current-value');
-            cfg.currentValue = max - (index * step);
+            
             if(callbackDisplay) callbackDisplay();
         };
 
@@ -157,22 +217,55 @@ function initializeApp() {
             currentY = -(new WebKitCSSMatrix(style.transform).m42);
             element.style.transition = 'none';
         };
+        
         const onMove = (e) => {
             if (!isDragging) return;
             e.preventDefault();
             const y = e.touches ? e.touches[0].clientY : e.clientY;
             element.style.transform = `translateY(-${currentY + (startY - y)}px)`;
         };
+        
         const onEnd = (e) => {
             if (!isDragging) return;
             isDragging = false;
             element.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
             const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-            currentIndex += Math.round((startY - y) / ITEM_HEIGHT);
-            const total = (max - min) / step + 1;
-            if (currentIndex < 0) currentIndex = 0;
-            if (currentIndex >= total) currentIndex = total - 1;
-            updateVisuals((currentIndex + buffer - 1.5) * ITEM_HEIGHT, currentIndex);
+            
+            // Calcul du nouvel index par rapport à la position finale
+            const finalScrollY = currentY + (startY - y);
+            let newIndex = Math.round(finalScrollY / ITEM_HEIGHT) - buffer + 1.5;
+            
+            // Correction pour le clamping (restriction de l'index)
+            const totalItems = element.querySelectorAll('.value').length; // Inclut dummies et répétitions
+            const maxIndex = totalItems - buffer - 1.5 - rangeSize; // Limite pour éviter de scroller dans le padding bas
+            const minIndex = buffer + rangeSize; // Limite pour éviter de scroller dans le padding haut
+
+            if (!isRepeating) {
+                // Limite pour les sélecteurs sans répétition (Degrees)
+                const realMaxIndex = (max - min) / step;
+                newIndex = Math.min(realMaxIndex, Math.max(0, newIndex - (buffer - 1.5))); // newIndex est l'index 0 à N
+                // On remet l'index à sa position dans la liste totale (inclut le padding)
+                currentIndex = newIndex; 
+            } else {
+                // Logique de "téléportation" pour le défilement infini (Dixiemes/Unites)
+                
+                // Si l'utilisateur est monté trop haut (dans la 1ère répétition), on téléporte sur la 4ème
+                if (newIndex < minIndex) {
+                    newIndex += rangeSize * (NUM_REPETITIONS - 1); // 40 items
+                } 
+                // Si l'utilisateur est descendu trop bas (dans la 5ème répétition), on téléporte sur la 2ème
+                else if (newIndex > maxIndex) {
+                    newIndex -= rangeSize * (NUM_REPETITIONS - 1); // 40 items
+                }
+                
+                // newIndex est maintenant ajusté
+                currentIndex = Math.round(newIndex);
+            }
+            
+            // On recalcule l'offset final et l'index visuel à mettre en surbrillance
+            const offset = (currentIndex + buffer - 1.5) * ITEM_HEIGHT;
+            updateVisuals(offset, currentIndex);
+            cfg.selectionIdx = currentIndex; // Sauvegarder le nouvel index total
         };
 
         element.addEventListener('touchstart', onStart, {passive: false});
