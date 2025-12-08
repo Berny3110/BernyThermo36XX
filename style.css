@@ -1,4 +1,4 @@
-/* style.css - Vibe Upgrade : Version COMPLETE */
+/* style.css - Version COMPLETE avec modales uniformisées */
 
 :root {
     --primary: #6366f1;       /* Indigo moderne */
@@ -78,7 +78,9 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
 }
 
-/* Wheel Selector */
+/* ============================================
+   WHEEL SELECTOR - Commun pour main + modales
+   ============================================ */
 .wheel-wrapper {
     position: relative; 
     height: var(--wheel-height); 
@@ -89,6 +91,11 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
     display: flex;
     justify-content: center;
+}
+
+/* Version modale : hauteur réduite */
+.wheel-wrapper.modal-wheel {
+    height: 180px;
 }
 
 .selection-highlight {
@@ -103,7 +110,7 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     border: 2px solid var(--primary);
     box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
     pointer-events: none; 
-    z-index: 0;
+    z-index: 1;
 }
 
 .temperature-selector-container {
@@ -113,7 +120,7 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     height: 100%; 
     width: 100%;
     position: relative; 
-    z-index: 1;
+    z-index: 2;
 }
 
 .selector {
@@ -121,9 +128,15 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     height: 100%; 
     text-align: center; 
     position: relative;
+    z-index: 2;
     /* Masque pour l'effet de fondu haut/bas */
     mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+}
+
+.scroll-area {
+    position: relative;
+    z-index: 2;
 }
 
 /* Base de Centrage et Décalage Visuel des éléments grisés */
@@ -135,11 +148,13 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     line-height: 1;         
     margin: 0;
     padding: 0;
-    /* Décalage uniforme pour les chiffres grisés et le séparateur (Montée à -9px) */
+    position: relative;
+    z-index: 2;
+    /* Décalage uniforme pour les chiffres grisés et le séparateur */
     transform: translateY(-9px); 
 }
 
-/* 2. Styles spécifiques aux chiffres (taille, couleur, etc.) */
+/* Styles spécifiques aux chiffres */
 .value {
     font-size: 2rem;
     font-weight: 600;
@@ -149,22 +164,25 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     cursor: grab;
 }
 
-/* ⚠️ CORRECTION CENTRAGE FINAL : Cible spécifique et décalage plus fort */
+.value.dummy {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Valeur sélectionnée - centrage parfait */
 .value.current-value {
     color: var(--text-main);
     opacity: 1;
-    /* Augmentation du décalage pour le centrage visuel parfait (Montée à -11px) */
     transform: scale(1.1) translateY(-11px); 
 }
 
-/* 3. Styles spécifiques au séparateur (taille, couleur) */
+/* Styles spécifiques au séparateur */
 .separator {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-sub);
-    /* L'opacité remonte */
-    opacity: 1; 
-    /* Le décalage est géré par la règle .value, .separator */
+    opacity: 1;
+    z-index: 2;
 }
 
 .current-temp-display { 
@@ -176,7 +194,7 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
 }
 .small-display { 
     font-size: 1.2rem; 
-    margin: 10px 0; 
+    margin: 15px 0; 
 }
 
 /* Buttons */
@@ -235,21 +253,30 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     display: none; position: fixed; top:0; left:0; width:100%; height:100%;
     background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);
     z-index: 200; justify-content: center; align-items: center;
+    overflow: hidden; /* Empêche le scroll */
+}
+
+body.modal-open {
+    overflow: hidden; /* Bloque le scroll du body quand modale ouverte */
 }
 .modal-content {
     background: var(--bg-card); padding: 24px; border-radius: 24px;
-    width: 90%; max-width: 400px; box-shadow: var(--shadow-md); text-align: center;
+    width: 90%; max-width: 450px; box-shadow: var(--shadow-md); text-align: center;
+}
+.small-modal {
+    max-width: 360px;
+}
+.modal-desc {
+    color: var(--text-sub);
+    font-size: 0.9rem;
+    margin: 8px 0 16px;
 }
 .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
 .modal-actions button { flex: 1; }
 input[type="datetime-local"], input[type="date"] {
-    width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 12px;
+    width: 100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 12px;
     font-family: inherit; margin-bottom: 15px; background: var(--bg-app); color: var(--text-main);
 }
-
-/* Pour les roues dans les modales, on réduit un peu la hauteur */
-.manual-selector .wheel-wrapper { height: 150px; }
-.manual-selector .selector { height: 150px; }
 
 @media (max-width: 768px) {
     .app-container { grid-template-columns: 1fr; }

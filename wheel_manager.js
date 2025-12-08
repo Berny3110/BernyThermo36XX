@@ -32,7 +32,12 @@ export class WheelManager {
 
     renderSelector(cfg) {
         const { element, min, max, step, buffer = BUFFER, currentValue, isRepeating } = cfg;
-        if (!element) return;
+        if (!element) {
+            console.warn('⚠️ renderSelector: element is null!');
+            return;
+        }
+        
+        console.log('🎨 Rendering selector:', element.id, 'current:', currentValue);
         
         element.innerHTML = '';
         const rangeSize = (max - min) / step + 1;
@@ -70,6 +75,8 @@ export class WheelManager {
         const offset = (cfg.selectionIdx + buffer - 1.5) * ITEM_HEIGHT;
 
         element.style.transform = `translateY(-${offset}px)`;
+        
+        console.log('✅ Selector rendered, values count:', element.querySelectorAll('.value:not(.dummy)').length);
 
         setTimeout(() => {
             const values = element.querySelectorAll('.value:not(.dummy)');
@@ -112,11 +119,13 @@ export class WheelManager {
             const matrix = new WebKitCSSMatrix(style.transform);
             currentY = -matrix.m42;
             element.style.transition = 'none';
+            e.stopPropagation(); // Empêche la propagation
         };
 
         const onMove = (e) => {
             if (!isDragging) return;
             e.preventDefault();
+            e.stopPropagation(); // Empêche la propagation
             const y = e.touches ? e.touches[0].clientY : e.clientY;
             const delta = startY - y;
             element.style.transform = `translateY(-${currentY + delta}px)`;
@@ -164,14 +173,27 @@ export class WheelManager {
             const offset = (currentIndex + buffer - 1.5) * ITEM_HEIGHT;
             updateVisuals(offset, currentIndex);
             cfg.selectionIdx = currentIndex;
+            e.stopPropagation(); // Empêche la propagation
         };
 
-        element.addEventListener('touchstart', onStart, { passive: false });
-        element.addEventListener('touchmove', onMove, { passive: false });
-        element.addEventListener('touchend', onEnd);
-        element.addEventListener('mousedown', onStart);
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onEnd);
+        // Ajout des listeners avec capture pour les modales
+        element.addEventListener('touchstart', onStart, { passive: false, capture: true });
+        element.addEventListener('touchmove', onMove, { passive: false, capture: true });
+        element.addEventListener('touchend', onEnd, { capture: true });
+        element.addEventListener('mousedown', onStart, { capture: true });
+        
+        // Pour les événements souris globaux, on garde le comportement actuel
+        const mouseMoveHandler = (e) => onMove(e);
+        const mouseUpHandler = (e) => {
+            onEnd(e);
+            window.removeEventListener('mousemove', mouseMoveHandler);
+            window.removeEventListener('mouseup', mouseUpHandler);
+        };
+        
+        element.addEventListener('mousedown', () => {
+            window.addEventListener('mousemove', mouseMoveHandler);
+            window.addEventListener('mouseup', mouseUpHandler);
+        });
     }
 
     getMainValue() {
@@ -192,8 +214,15 @@ export class WheelManager {
         this.dom.display.textContent = this.getMainValue().toFixed(2) + '°C';
     }
 
-    createModalConfig(prefix, defaults) {
-        const selectors = this.getModalSelectors(prefix);
+    createModalConfig(modalId, defaults) {
+        console.log('🔧 Creating modal config for:', modalId);
+        const selectors = this.dom.getModalSelectors(modalId);
+        console.log('📍 Selectors found:', {
+            degrees: selectors.degrees?.id,
+            dixiemes: selectors.dixiemes?.id,
+            unites: selectors.unites?.id
+        });
+        
         return {
             degrees: { element: selectors.degrees, min: 34, max: 42, step: 1, defaultValue: defaults.d, currentValue: defaults.d, isRepeating: false },
             dixiemes: { element: selectors.dixiemes, min: 0, max: 9, step: 1, defaultValue: defaults.dx, currentValue: defaults.dx, isRepeating: true },
@@ -203,13 +232,6 @@ export class WheelManager {
 
     getModalSelectors(prefix) {
         const modalId = prefix === 'edit-' ? 'edit-modal' : 'add-manual-modal';
-        const modal = document.getElementById(modalId);
-        if (!modal) return { degrees: null, dixiemes: null, unites: null };
-
-        return {
-            degrees: modal.querySelector('.degrees .scroll-area'),
-            dixiemes: modal.querySelector('.dixiemes .scroll-area'),
-            unites: modal.querySelector('.unites .scroll-area')
-        };
+        return this.dom.getModalSelectors(modalId);
     }
 }

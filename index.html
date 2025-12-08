@@ -31,38 +31,38 @@
             <div class="wheel-wrapper">
                 <div class="selection-highlight"></div>
                 
-									<div class="temperature-selector-container">
-											<div class="selector degrees" id="degrees-selector">
-													<div class="scroll-area" id="degrees-scroll"></div>
-											</div>
-											<div class="separator decimal-separator">.</div>
-											
-											<div class="selector dixiemes" id="dixiemes-selector">
-													<div class="scroll-area" id="dixiemes-scroll">
-															<div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
-															<div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
-															
-															<div class="value">3</div> <div class="value">4</div> <div class="value current-value">5</div> <div class="value">6</div> 
-															
-															<div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
-															<div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
-													</div>
-											</div>
-											
-											<div class="separator degree-c-separator">°C</div>
-											
-											<div class="selector unites" id="unites-selector">
-													<div class="scroll-area" id="unites-scroll">
-															<div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
-															<div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
+                <div class="temperature-selector-container">
+                    <div class="selector degrees" id="degrees-selector">
+                        <div class="scroll-area" id="degrees-scroll"></div>
+                    </div>
+                    <div class="separator decimal-separator">.</div>
+                    
+                    <div class="selector dixiemes" id="dixiemes-selector">
+                        <div class="scroll-area" id="dixiemes-scroll">
+                            <div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
+                            <div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
+                            
+                            <div class="value">3</div> <div class="value">4</div> <div class="value current-value">5</div> <div class="value">6</div> 
+                            
+                            <div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
+                            <div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
+                        </div>
+                    </div>
+                    
+                    <div class="separator degree-c-separator">°C</div>
+                    
+                    <div class="selector unites" id="unites-selector">
+                        <div class="scroll-area" id="unites-scroll">
+                            <div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
+                            <div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
 
-															<div class="value">3</div> <div class="value">4</div> <div class="value current-value">5</div> <div class="value">6</div> 
-															
-															<div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
-															<div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
-													</div>
-											</div>
-									</div>
+                            <div class="value">3</div> <div class="value">4</div> <div class="value current-value">5</div> <div class="value">6</div> 
+                            
+                            <div class="value">7</div> <div class="value">8</div> <div class="value">9</div>
+                            <div class="value">0</div> <div class="value">1</div> <div class="value">2</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="current-temp-display">
@@ -80,7 +80,7 @@
                 
                 <div id="cycle-status-container" class="hidden">
                     <div id="cycle-info" class="cycle-pill" title="Cliquer pour modifier la date de début">
-                        </div>
+                    </div>
                     <button id="cycle-end-btn" class="text-btn">Terminer</button>
                 </div>
             </div>
@@ -112,18 +112,37 @@
         </section>
     </div>
 
+    <!-- MODAL EDIT -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
             <h3>Modifier Mesure</h3>
             <input type="datetime-local" id="edit-date-input">
-            <div class="temperature-selector-container manual-selector">
-                <div class="selector degrees" id="edit-degrees-selector"><div class="scroll-area" id="edit-degrees-scroll"></div></div>
-                <div class="separator">.</div>
-                <div class="selector dixiemes" id="edit-dixiemes-selector"><div class="scroll-area" id="edit-dixiemes-scroll"></div></div>
-                <div class="separator">°C</div>
-                <div class="selector unites" id="edit-unites-selector"><div class="scroll-area" id="edit-unites-scroll"></div></div>
+            
+            <div class="wheel-wrapper modal-wheel">
+                <div class="selection-highlight"></div>
+                
+                <div class="temperature-selector-container">
+                    <div class="selector degrees">
+                        <div class="scroll-area" id="edit-degrees-scroll"></div>
+                    </div>
+                    <div class="separator">.</div>
+                    
+                    <div class="selector dixiemes">
+                        <div class="scroll-area" id="edit-dixiemes-scroll"></div>
+                    </div>
+                    
+                    <div class="separator">°C</div>
+                    
+                    <div class="selector unites">
+                        <div class="scroll-area" id="edit-unites-scroll"></div>
+                    </div>
+                </div>
             </div>
-            <div class="current-temp-display small-display"><span id="edit-current-display">--</span></div>
+            
+            <div class="current-temp-display small-display">
+                <span id="edit-current-display">36.60°C</span>
+            </div>
+            
             <div class="modal-actions">
                 <button id="edit-cancel" class="secondary-btn">Annuler</button>
                 <button id="edit-ok" class="primary-btn">Valider</button>
@@ -131,18 +150,37 @@
         </div>
     </div>
 
+    <!-- MODAL ADD MANUAL -->
     <div id="add-manual-modal" class="modal">
         <div class="modal-content">
             <h3>Ajout Manuel</h3>
             <input type="datetime-local" id="add-date-input">
-            <div class="temperature-selector-container manual-selector">
-                <div class="selector degrees" id="add-degrees-selector"><div class="scroll-area" id="add-degrees-scroll"></div></div>
-                <div class="separator">.</div>
-                <div class="selector dixiemes" id="add-dixiemes-selector"><div class="scroll-area" id="add-dixiemes-scroll"></div></div>
-                <div class="separator">°C</div>
-                <div class="selector unites" id="add-unites-selector"><div class="scroll-area" id="add-unites-scroll"></div></div>
+            
+            <div class="wheel-wrapper modal-wheel">
+                <div class="selection-highlight"></div>
+                
+                <div class="temperature-selector-container">
+                    <div class="selector degrees">
+                        <div class="scroll-area" id="add-degrees-scroll"></div>
+                    </div>
+                    <div class="separator">.</div>
+                    
+                    <div class="selector dixiemes">
+                        <div class="scroll-area" id="add-dixiemes-scroll"></div>
+                    </div>
+                    
+                    <div class="separator">°C</div>
+                    
+                    <div class="selector unites">
+                        <div class="scroll-area" id="add-unites-scroll"></div>
+                    </div>
+                </div>
             </div>
-            <div class="current-temp-display small-display"><span id="add-current-display">--</span></div>
+            
+            <div class="current-temp-display small-display">
+                <span id="add-current-display">36.60°C</span>
+            </div>
+            
             <div class="modal-actions">
                 <button id="add-manual-cancel" class="secondary-btn">Annuler</button>
                 <button id="add-manual-ok" class="primary-btn">Ajouter</button>
@@ -150,6 +188,7 @@
         </div>
     </div>
 
+    <!-- MODAL CYCLE DATE -->
     <div id="cycle-date-modal" class="modal">
         <div class="modal-content small-modal">
             <h3>Début du Cycle</h3>
