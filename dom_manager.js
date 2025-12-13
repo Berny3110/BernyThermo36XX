@@ -59,11 +59,18 @@ export class DOMManager {
         });
     }
 
-    getModalSelectors(prefix) {
-        return {
-            degrees: document.querySelector(`#${prefix}modal .degrees #${prefix.replace('-','')}degrees-scroll`),
-            dixiemes: document.querySelector(`#${prefix}modal .dixiemes #${prefix.replace('-','')}dixiemes-scroll`),
-            unites: document.querySelector(`#${prefix}modal .unites #${prefix.replace('-','')}unites-scroll`)
-        };
-    }
+		getModalSelectors(prefix) {
+						// 'prefix' est l'ID complet de la modale, ex: 'edit-modal' ou 'add-manual-modal'
+						
+						// Détermine la base de l'ID pour les sélecteurs de roue (ex: 'edit' ou 'add')
+						const idBase = prefix.includes('add-manual') ? 'add' : 'edit';
+						
+						return {
+								// Correction 1: Ne pas ajouter 'modal' en suffixe au premier sélecteur
+								// Correction 2: Utiliser la structure d'ID correcte (ex: #edit-degrees-scroll)
+								degrees: document.querySelector(`#${prefix} .degrees #${idBase}-degrees-scroll`),
+								dixiemes: document.querySelector(`#${prefix} .dixiemes #${idBase}-dixiemes-scroll`),
+								unites: document.querySelector(`#${prefix} .unites #${idBase}-unites-scroll`)
+						};
+				}
 }

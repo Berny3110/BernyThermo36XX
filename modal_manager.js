@@ -28,8 +28,9 @@ export class ModalManager {
         });
 
         // Modal Manual
-        this.dom.modalBtns.manualCancel.addEventListener('click', () => {
+				this.dom.modalBtns.manualCancel.addEventListener('click', () => {
             this.dom.modals.manual.style.display = 'none';
+            document.body.classList.remove('modal-open'); // <-- AJOUTÉ
         });
 
         this.dom.modalBtns.manualOk.addEventListener('click', () => {
@@ -40,6 +41,7 @@ export class ModalManager {
             
             this.data.addTemperature(value, timestamp);
             this.dom.modals.manual.style.display = 'none';
+            document.body.classList.remove('modal-open'); // <-- AJOUTÉ
             
             const event = new Event('data-updated');
             window.dispatchEvent(event);
@@ -48,6 +50,7 @@ export class ModalManager {
         // Modal Edit
         this.dom.modalBtns.editCancel.addEventListener('click', () => {
             this.dom.modals.edit.style.display = 'none';
+            document.body.classList.remove('modal-open'); // <-- AJOUTÉ
         });
 
         this.dom.modalBtns.editOk.addEventListener('click', () => {
@@ -59,7 +62,7 @@ export class ModalManager {
                 
                 this.data.updateTemperature(this.editingIndex, value, timestamp);
                 this.dom.modals.edit.style.display = 'none';
-                this.editingIndex = -1;
+                document.body.classList.remove('modal-open'); // <-- AJOUTÉ
                 
                 const event = new Event('data-updated');
                 window.dispatchEvent(event);
@@ -78,9 +81,13 @@ export class ModalManager {
     }
 
     openManual() {
+        console.log('📝 Opening manual modal...');
         this.dom.inputs.manualDate.value = new Date().toISOString().slice(0, 16);
         
-        this.manualConfig = this.wheel.createModalConfig('add-', { d: 36, dx: 6, u: 0 });
+        // Utilise le modalId au lieu du prefix
+        this.manualConfig = this.wheel.createModalConfig('add-manual-modal', { d: 36, dx: 6, u: 0 });
+        
+        console.log('📊 Manual config created:', this.manualConfig);
         
         const displayElement = document.getElementById('add-current-display');
         const updateDisplay = () => {
@@ -91,20 +98,30 @@ export class ModalManager {
         updateDisplay();
         
         this.dom.modals.manual.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        console.log('✅ Manual modal opened');
     }
 
     openEdit(index) {
+        console.log('✏️ Opening edit modal for index:', index);
         this.editingIndex = index;
         const temps = this.data.getTemperaturesSorted();
         const t = temps[index];
 
         this.dom.inputs.editDate.value = new Date(t.timestamp).toISOString().slice(0, 16);
+				
+				const valueInt = Math.round(t.value * 100);
 
         const d = Math.floor(t.value);
         const dx = Math.floor((t.value % 1) * 10);
         const u = Math.round((t.value % 0.1) * 100);
 
-        this.editConfig = this.wheel.createModalConfig('edit-', { d, dx, u });
+        console.log('🔢 Edit values - d:', d, 'dx:', dx, 'u:', u);
+
+        // Utilise le modalId au lieu du prefix
+        this.editConfig = this.wheel.createModalConfig('edit-modal', { d, dx, u });
+        
+        console.log('📊 Edit config created:', this.editConfig);
 
         const displayElement = document.getElementById('edit-current-display');
         const updateDisplay = () => {
@@ -115,6 +132,8 @@ export class ModalManager {
         updateDisplay();
 
         this.dom.modals.edit.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        console.log('✅ Edit modal opened');
     }
 
     openCycleDate() {
@@ -123,5 +142,6 @@ export class ModalManager {
         
         this.dom.inputs.cycleStart.value = new Date(cycleStart).toISOString().split('T')[0];
         this.dom.modals.cycle.style.display = 'flex';
+        document.body.classList.add('modal-open');
     }
 }
