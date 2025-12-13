@@ -1,7 +1,7 @@
 {
-  "name": "Jeu de Lettres",
-  "short_name": "Lettres",
-  "description": "Un tirage aléatoire de lettres avec fond rouge ou bleu",
+  "name": "Mon suivi Thermo",
+  "short_name": "Thermo",
+  "description": "Appli de suivi de température",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#000000",

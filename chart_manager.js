@@ -71,7 +71,7 @@ export class ChartManager {
                 scales: {
                     y: {
                         min: 35.8,
-                        max: 37.8
+                        max: 37.0
                     },
                     x: {
                         grid: { display: false }

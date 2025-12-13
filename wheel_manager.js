@@ -9,8 +9,8 @@ export class WheelManager {
         
         // Config principale
         this.mainConfig = {
-            degrees: { element: dom.mainSelectors.degrees, min: 34, max: 42, step: 1, defaultValue: 36, currentValue: 36, isRepeating: false },
-            dixiemes: { element: dom.mainSelectors.dixiemes, min: 0, max: 9, step: 1, defaultValue: 6, currentValue: 6, isRepeating: true },
+            degrees: { element: dom.mainSelectors.degrees, min: 34, max: 39, step: 1, defaultValue: 36, currentValue: 36, isRepeating: false },
+            dixiemes: { element: dom.mainSelectors.dixiemes, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3, isRepeating: true },
             unites: { element: dom.mainSelectors.unites, min: 0, max: 9, step: 1, defaultValue: 0, currentValue: 0, isRepeating: true }
         };
     }
