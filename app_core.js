@@ -28,16 +28,47 @@ class ThermoApp {
         // Initialiser le cycle UI
         this.cycle.updateUI();
 
-        // Event: Sauvegarder température
-        this.dom.saveBtn.addEventListener('click', () => {
-            const value = this.wheel.getMainValue();
-            this.data.addTemperature(value);
-            this.renderAll();
-            this.dom.saveBtn.innerHTML = '<i class="fas fa-check-circle"></i> Sauvegardé !';
-            setTimeout(() => {
-                this.dom.saveBtn.innerHTML = '<i class="fas fa-check"></i> Enregistrer';
-            }, 2000);
-        });
+				// Event: Sauvegarder température
+				this.dom.saveBtn.addEventListener('click', () => {
+						const value = this.wheel.getMainValue();
+						const now = new Date();
+
+						// Cherche s’il existe déjà une mesure aujourd’hui
+						const existingToday = this.data.getTemperatureForDate(now);
+
+						if (existingToday) {
+								const dateStr = now.toLocaleDateString('fr-FR', {
+										weekday: 'long',
+										day: 'numeric',
+										month: 'long',
+										year: 'numeric'
+								});
+
+								const confirmReplace = confirm(
+										`Vous avez déjà une mesure pour aujourd'hui (${dateStr}) :\n` +
+										`${existingToday.value.toFixed(2)}°C\n\n` +
+										`Voulez-vous la remplacer par ${value.toFixed(2)}°C ?`
+								);
+
+								if (!confirmReplace) {
+										return; // Annulation → on sort sans rien faire
+								}
+
+								// Suppression de l’ancienne mesure du jour
+								this.data.deleteTemperatureByTimestamp(existingToday.timestamp);
+						}
+
+						// Ajout de la nouvelle mesure (dans tous les cas)
+						this.data.addTemperature(value);
+
+						this.renderAll();
+
+						// Feedback visuel
+						this.dom.saveBtn.innerHTML = '<i class="fas fa-check-circle"></i> Sauvegardé !';
+						setTimeout(() => {
+								this.dom.saveBtn.innerHTML = '<i class="fas fa-check"></i> Enregistrer';
+						}, 2000);
+				});
 
         // Event: Effacer historique
         this.dom.clearBtn.addEventListener('click', () => {

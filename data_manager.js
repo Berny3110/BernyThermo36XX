@@ -26,6 +26,11 @@ export class DataManager {
         this.temperatures = sorted;
         this.save();
     }
+		
+		deleteTemperatureByTimestamp(timestamp) {
+				this.temperatures = this.temperatures.filter(t => t.timestamp !== timestamp);
+				this.save();
+		}
 
     getTemperaturesSorted() {
         return [...this.temperatures].sort((a, b) => 
@@ -45,4 +50,15 @@ export class DataManager {
     save() {
         localStorage.setItem('temperatures_v2', JSON.stringify(this.temperatures));
     }
+		
+		getTemperatureForDate(date) {
+				const targetMidnight = new Date(date);
+				targetMidnight.setHours(0, 0, 0, 0);
+
+				return this.temperatures.find(t => {
+						const tDate = new Date(t.timestamp);
+						tDate.setHours(0, 0, 0, 0);
+						return tDate.getTime() === targetMidnight.getTime();
+				});
+		}
 }

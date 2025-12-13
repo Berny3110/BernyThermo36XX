@@ -60,17 +60,16 @@ export class DOMManager {
     }
 
 		getModalSelectors(prefix) {
-						// 'prefix' est l'ID complet de la modale, ex: 'edit-modal' ou 'add-manual-modal'
-						
-						// Détermine la base de l'ID pour les sélecteurs de roue (ex: 'edit' ou 'add')
-						const idBase = prefix.includes('add-manual') ? 'add' : 'edit';
-						
-						return {
-								// Correction 1: Ne pas ajouter 'modal' en suffixe au premier sélecteur
-								// Correction 2: Utiliser la structure d'ID correcte (ex: #edit-degrees-scroll)
-								degrees: document.querySelector(`#${prefix} .degrees #${idBase}-degrees-scroll`),
-								dixiemes: document.querySelector(`#${prefix} .dixiemes #${idBase}-dixiemes-scroll`),
-								unites: document.querySelector(`#${prefix} .unites #${idBase}-unites-scroll`)
-						};
-				}
+				// 'prefix' est l'ID complet de la modale, ex: 'edit-modal' ou 'add-manual-modal'
+				
+				// Détermine la base de l'ID pour les sélecteurs de roue
+				const idBase = prefix.includes('add-manual') ? 'add' : 'edit';
+				
+				return {
+						// Correction : chercher directement le #scroll-area avec le bon ID
+						degrees: document.querySelector(`#${idBase}-degrees-scroll`),
+						dixiemes: document.querySelector(`#${idBase}-dixiemes-scroll`),
+						unites: document.querySelector(`#${idBase}-unites-scroll`)
+				};
+		}
 }

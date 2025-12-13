@@ -1,4 +1,4 @@
-// wheel-manager.js - Gestion des roues de sélection
+// wheel_manager.js - Gestion des roues de sélection
 const BUFFER = 5;
 const ITEM_HEIGHT = 60;
 
@@ -7,7 +7,6 @@ export class WheelManager {
         this.dom = dom;
         this.data = data;
         
-        // Config principale
         this.mainConfig = {
             degrees: { element: dom.mainSelectors.degrees, min: 34, max: 39, step: 1, defaultValue: 36, currentValue: 36, isRepeating: false },
             dixiemes: { element: dom.mainSelectors.dixiemes, min: 0, max: 9, step: 1, defaultValue: 3, currentValue: 3, isRepeating: true },
@@ -31,15 +30,11 @@ export class WheelManager {
     }
 
     renderSelector(cfg) {
-        const { element, min, max, step, buffer = BUFFER, currentValue, isRepeating } = cfg;
-        if (!element) {
-            console.warn('⚠️ renderSelector: element is null!');
-            return;
-        }
-        
-        console.log('🎨 Rendering selector:', element.id, 'current:', currentValue);
-        
+        const { element, min, max, step, currentValue, isRepeating } = cfg;
+        if (!element) return;
+
         element.innerHTML = '';
+
         const rangeSize = (max - min) / step + 1;
 
         const generateSequence = () => {
@@ -50,8 +45,8 @@ export class WheelManager {
             return html;
         };
 
-        // Padding supérieur
-        for (let i = 0; i < buffer; i++) {
+        // Padding supérieur (dummy)
+        for (let i = 0; i < BUFFER; i++) {
             element.innerHTML += '<div class="value dummy"></div>';
         }
 
@@ -72,18 +67,16 @@ export class WheelManager {
 
         const idxInSequence = (max - currentValue) / step;
         cfg.selectionIdx = idxInSequence + offsetIndexAdjustment;
-        const offset = (cfg.selectionIdx + buffer - 1.5) * ITEM_HEIGHT;
+        const offset = (cfg.selectionIdx + BUFFER - 1.5) * ITEM_HEIGHT;
 
         element.style.transform = `translateY(-${offset}px)`;
-        
-        console.log('✅ Selector rendered, values count:', element.querySelectorAll('.value:not(.dummy)').length);
 
-        setTimeout(() => {
-            const values = element.querySelectorAll('.value:not(.dummy)');
-            if (values[cfg.selectionIdx]) {
-                values[cfg.selectionIdx].classList.add('current-value');
-            }
-        }, 50);
+        // Ajout direct de current-value
+        const values = element.querySelectorAll('.value:not(.dummy)');
+        values.forEach(v => v.classList.remove('current-value'));
+        if (values[cfg.selectionIdx]) {
+            values[cfg.selectionIdx].classList.add('current-value');
+        }
     }
 
     initSwipe(cfg, callbackDisplay) {
@@ -119,26 +112,27 @@ export class WheelManager {
             const matrix = new WebKitCSSMatrix(style.transform);
             currentY = -matrix.m42;
             element.style.transition = 'none';
-            e.stopPropagation(); // Empêche la propagation
+            e.stopPropagation();
         };
 
         const onMove = (e) => {
             if (!isDragging) return;
-            e.preventDefault();
-            e.stopPropagation(); // Empêche la propagation
-            const y = e.touches ? e.touches[0].clientY : e.clientY;
-            const delta = startY - y;
-            element.style.transform = `translateY(-${currentY + delta}px)`;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const delta = clientY - startY;
+            const scrollY = currentY + delta;
+            element.style.transform = `translateY(-${scrollY}px)`;
+            e.stopPropagation();
         };
 
         const onEnd = (e) => {
             if (!isDragging) return;
             isDragging = false;
-            element.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-            const y = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-            const delta = startY - y;
 
-            const finalScrollY = currentY + delta;
+            element.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+
+            const style = window.getComputedStyle(element);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            let finalScrollY = -matrix.m42;
             let newIndex = Math.round((finalScrollY - (buffer - 1.5) * ITEM_HEIGHT) / ITEM_HEIGHT);
 
             if (!isRepeating) {
@@ -173,7 +167,7 @@ export class WheelManager {
             const offset = (currentIndex + buffer - 1.5) * ITEM_HEIGHT;
             updateVisuals(offset, currentIndex);
             cfg.selectionIdx = currentIndex;
-            e.stopPropagation(); // Empêche la propagation
+            e.stopPropagation();
         };
 
         // Ajout des listeners avec capture pour les modales
@@ -182,7 +176,7 @@ export class WheelManager {
         element.addEventListener('touchend', onEnd, { capture: true });
         element.addEventListener('mousedown', onStart, { capture: true });
         
-        // Pour les événements souris globaux, on garde le comportement actuel
+        // Pour les événements souris globaux
         const mouseMoveHandler = (e) => onMove(e);
         const mouseUpHandler = (e) => {
             onEnd(e);
@@ -224,7 +218,7 @@ export class WheelManager {
         });
         
         return {
-            degrees: { element: selectors.degrees, min: 34, max: 42, step: 1, defaultValue: defaults.d, currentValue: defaults.d, isRepeating: false },
+            degrees: { element: selectors.degrees, min: 34, max: 38, step: 1, defaultValue: defaults.d, currentValue: defaults.d, isRepeating: false },
             dixiemes: { element: selectors.dixiemes, min: 0, max: 9, step: 1, defaultValue: defaults.dx, currentValue: defaults.dx, isRepeating: true },
             unites: { element: selectors.unites, min: 0, max: 9, step: 1, defaultValue: defaults.u, currentValue: defaults.u, isRepeating: true }
         };

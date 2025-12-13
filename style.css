@@ -150,8 +150,6 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
     padding: 0;
     position: relative;
     z-index: 2;
-    /* Décalage uniforme pour les chiffres grisés et le séparateur */
-    transform: translateY(-9px); 
 }
 
 /* Styles spécifiques aux chiffres */
@@ -173,7 +171,7 @@ h3 { margin: 0; font-size: 1rem; font-weight: 600; color: var(--text-sub); }
 .value.current-value {
     color: var(--text-main);
     opacity: 1;
-    transform: scale(1.1) translateY(-11px); 
+    transform: scale(1.1); 
 }
 
 /* Styles spécifiques au séparateur */

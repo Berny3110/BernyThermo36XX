@@ -33,19 +33,45 @@ export class ModalManager {
             document.body.classList.remove('modal-open'); // <-- AJOUTÉ
         });
 
-        this.dom.modalBtns.manualOk.addEventListener('click', () => {
-            const value = this.wheel.getValue(this.manualConfig);
-            const timestamp = this.dom.inputs.manualDate.value 
-                ? new Date(this.dom.inputs.manualDate.value).toISOString()
-                : new Date().toISOString();
-            
-            this.data.addTemperature(value, timestamp);
-            this.dom.modals.manual.style.display = 'none';
-            document.body.classList.remove('modal-open'); // <-- AJOUTÉ
-            
-            const event = new Event('data-updated');
-            window.dispatchEvent(event);
-        });
+				this.dom.modalBtns.manualOk.addEventListener('click', () => {
+						const value = this.wheel.getValue(this.manualConfig);
+						const inputDate = this.dom.inputs.manualDate.value 
+								? new Date(this.dom.inputs.manualDate.value)
+								: new Date();
+
+						// Vérifier s’il y a déjà une mesure ce jour-là
+						const existing = this.data.getTemperatureForDate(inputDate);
+
+						if (existing) {
+								const dateStr = inputDate.toLocaleDateString('fr-FR', {
+										weekday: 'long',
+										day: 'numeric',
+										month: 'long',
+										year: 'numeric'
+								});
+
+								const confirmReplace = confirm(
+										`Il existe déjà une mesure pour le ${dateStr} :\n` +
+										`${existing.value.toFixed(2)}°C\n\n` +
+										`Voulez-vous la remplacer par ${value.toFixed(2)}°C ?`
+								);
+
+								if (!confirmReplace) {
+										return; // Annulation
+								}
+
+								this.data.deleteTemperatureByTimestamp(existing.timestamp);
+						}
+
+						const timestamp = inputDate.toISOString();
+						this.data.addTemperature(value, timestamp);
+
+						this.dom.modals.manual.style.display = 'none';
+						document.body.classList.remove('modal-open');
+						
+						const event = new Event('data-updated');
+						window.dispatchEvent(event);
+				});
 
         // Modal Edit
         this.dom.modalBtns.editCancel.addEventListener('click', () => {
